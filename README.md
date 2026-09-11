@@ -1,5 +1,7 @@
 # Claims Triage System
 
+![CI](https://github.com/coltonmartinn/insurance-claims-system/actions/workflows/ci.yml/badge.svg)
+
 A small auto insurance claims system built around one design decision: **the
 software never decides to pay or deny a claim.** It decides who looks at it,
 and how urgently.
