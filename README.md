@@ -104,6 +104,25 @@ username), a timestamp, and a reason. There is no code path that changes
 detail page's "Audit Trail" section a complete history rather than a
 snapshot.
 
+## Two audiences, two designs
+
+The same `ClaimStatusEvent` history is presented two different ways,
+because an adjuster and a claimant need fundamentally different things from
+it. `app/narrative.py` translates the technical record into plain language
+for the customer-facing claim page: instead of `pending_review`, they see
+"We're reviewing your claim, this usually takes a few business days," and
+instead of a system-generated routing reason ("Risk score 60, priority
+'high'"), they see nothing at all for automated steps and, for an actual
+human decision (approved/denied/paid), the adjuster's own note quoted back
+to them. Internal risk methodology is never shown to a policyholder.
+
+That page also leads with a single-answer status headline and tucks the
+full incident/policy data behind a collapsed "Claim details" disclosure,
+so the thing a stressed claimant is checking for (is this okay?) is the
+first thing they see, not the last. The adjuster's view of the identical
+claim keeps the raw audit trail, risk rule breakdown, and action buttons in
+full, because precision and density are what that job actually needs.
+
 ## Claim lifecycle
 
 ```

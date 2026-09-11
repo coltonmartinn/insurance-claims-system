@@ -29,7 +29,9 @@ def test_small_clean_claim_auto_clears(client, db_session):
     }, follow_redirects=True)
 
     assert resp.status_code == 200
-    assert b"Auto Cleared" in resp.data
+    # Customers see the plain-language headline, not the raw status enum --
+    # that's the whole point of the narrative layer in app/narrative.py.
+    assert b"Your claim is cleared" in resp.data
 
     claim = Claim.query.filter_by(policy_id=policy.id).one()
     assert claim.status == "auto_cleared"
@@ -52,7 +54,8 @@ def test_high_value_claim_routes_to_pending_review(client, db_session):
     }, follow_redirects=True)
 
     assert resp.status_code == 200
-    assert b"Pending Review" in resp.data
+    # Jinja autoescapes the apostrophe in "We're", so match around it.
+    assert b"re reviewing your claim" in resp.data
 
     claim = Claim.query.filter_by(policy_id=policy.id).one()
     assert claim.status == "pending_review"

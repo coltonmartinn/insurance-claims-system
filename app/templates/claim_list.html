@@ -10,14 +10,14 @@
   <a class="btn" href="{{ url_for('claims.new_claim') }}">File a Claim</a>
 </div>
 
+{% if current_user.role == 'adjuster' %}
+{# Adjuster: dense table, sortable-feeling, built for scanning volume. #}
 <div class="card">
   {% if claims %}
   <div class="table-wrap">
   <table>
     <thead>
-      <tr>
-        <th>ID</th><th>Policy</th><th>Type</th><th>Incident Date</th><th>Amount</th><th>Status</th>{% if current_user.role == 'adjuster' %}<th>Risk Score</th>{% endif %}
-      </tr>
+      <tr><th>ID</th><th>Policy</th><th>Type</th><th>Incident Date</th><th>Amount</th><th>Status</th><th>Risk Score</th></tr>
     </thead>
     <tbody>
       {% for claim in claims %}
@@ -28,9 +28,7 @@
         <td>{{ claim.incident_date }}</td>
         <td>${{ "%.2f"|format(claim.claimed_amount) }}</td>
         <td><span class="badge badge-{{ claim.status }}">{{ claim.status.replace('_',' ')|title }}</span></td>
-        {% if current_user.role == 'adjuster' %}
         <td>{% if claim.risk_score is not none %}{{ risk_meter(claim.risk_score, claim.risk_priority or 'normal') }}{% else %}N/A{% endif %}</td>
-        {% endif %}
       </tr>
       {% endfor %}
     </tbody>
@@ -40,4 +38,28 @@
   <p class="helptext">No claims yet.</p>
   {% endif %}
 </div>
+
+{% else %}
+{# Customer: a claim is a moment in someone's life, not a spreadsheet row. #}
+{% if claims %}
+<div class="claim-card-list">
+  {% for claim in claims %}
+  <a class="claim-card" href="{{ url_for('claims.claim_detail', claim_id=claim.id) }}">
+    <div class="claim-card-main">
+      <div class="claim-card-title">{{ claim.incident_type.replace('_',' ')|title }}</div>
+      <div class="claim-card-meta">Filed {{ claim.claim_date.strftime('%B %d, %Y') }} &middot; Incident on {{ claim.incident_date.strftime('%B %d, %Y') }}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:1.25rem;">
+      <span class="claim-card-amount">${{ "%.2f"|format(claim.claimed_amount) }}</span>
+      <span class="badge badge-{{ claim.status }}">{{ claim.status.replace('_',' ')|title }}</span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">
+  <p class="helptext">No claims yet. If you ever need to file one, we're right here.</p>
+</div>
+{% endif %}
+{% endif %}
 {% endblock %}

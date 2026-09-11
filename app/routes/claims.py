@@ -13,6 +13,7 @@ from app.models import Policy, Claim, INCIDENT_TYPES
 from app.auth import login_required
 from app.claim_service import file_claim
 from app.validation import ValidationError, validate_int, validate_incident_date, validate_claimed_amount
+from app import narrative
 
 bp = Blueprint("claims", __name__, url_prefix="/claims")
 
@@ -110,7 +111,20 @@ def claim_detail(claim_id):
         abort(403)
 
     fired_rules = json.loads(claim.risk_explanation) if claim.risk_explanation else []
-    return render_template("claim_detail.html", claim=claim, fired_rules=fired_rules)
+
+    timeline = [
+        {"text": text, "detail": detail, "date": event.timestamp, "is_current": i == len(claim.status_events) - 1}
+        for i, event in enumerate(claim.status_events)
+        for text, detail in [narrative.humanize_event(event)]
+    ]
+
+    return render_template(
+        "claim_detail.html", claim=claim, fired_rules=fired_rules, timeline=timeline,
+        mood=narrative.current_mood(claim.status),
+        headline=narrative.headline_for_status(claim.status),
+        subhead=narrative.subhead_for_status(claim.status),
+        next_steps=narrative.next_steps_for_status(claim.status),
+    )
 
 
 @bp.route("/uploads/<path:filename>")

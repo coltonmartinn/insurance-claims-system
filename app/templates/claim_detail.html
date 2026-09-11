@@ -2,13 +2,15 @@
 {% from "_risk.html" import score_ring %}
 {% block title %}Claim #{{ claim.id }}{% endblock %}
 {% block content %}
+{% if current_user.role == 'adjuster' %}
+{# ---------------------------------------------------------------- adjuster: the professional workbench view. Dense, precise, no narrative softening -- an adjuster needs the exact record, not a summary. #}
 <div class="claim-header">
   <div>
     <div class="claim-header-id">Claim #{{ claim.id }}</div>
     <h1 style="margin-bottom:0.4rem">{{ claim.incident_type.replace('_',' ')|title }}: ${{ "%.2f"|format(claim.claimed_amount) }}</h1>
     <span class="badge badge-{{ claim.status }}">{{ claim.status.replace('_',' ')|title }}</span>
   </div>
-  {% if current_user.role == 'adjuster' and claim.risk_score is not none %}
+  {% if claim.risk_score is not none %}
     {{ score_ring(claim.risk_score, claim.risk_priority) }}
   {% endif %}
 </div>
@@ -34,7 +36,6 @@
     {% endif %}
   </div>
 
-  {% if current_user.role == 'adjuster' %}
   <div class="card">
     <h2 style="margin-top:0">Risk Assessment</h2>
     {% if claim.risk_score is not none %}
@@ -75,7 +76,6 @@
     </form>
     {% endif %}
   </div>
-  {% endif %}
 </div>
 
 <div class="card">
@@ -90,4 +90,52 @@
     {% endfor %}
   </div>
 </div>
+
+{% else %}
+{# ---------------------------------------------------------------- customer: the stressed-human view. One answer first, everything else behind a fold. #}
+<div class="status-hero mood-{{ mood }}">
+  <div class="status-hero-eyebrow">Claim #{{ claim.id }} &middot; filed {{ claim.claim_date.strftime('%B %d, %Y') }}</div>
+  <h1>{{ headline }}</h1>
+  <p>{{ subhead }}</p>
+</div>
+
+<div class="claim-layout">
+  <div class="card">
+    <h2 style="margin-top:0">What's happening</h2>
+    <ul class="narrative-timeline">
+      {% for step in timeline %}
+      <li class="{{ 'is-current' if step.is_current }}">
+        <div class="step-text">{{ step.text }}</div>
+        {% if step.detail %}<div class="step-text" style="margin-top:0.35rem;font-style:italic;color:var(--muted);">&ldquo;{{ step.detail }}&rdquo;</div>{% endif %}
+        <div class="step-date">{{ step.date.strftime('%B %d, %Y') }}</div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="next-steps-panel">
+    <div class="eyebrow">What we need from you</div>
+    <h2 style="margin-top:0">Next steps</h2>
+    <p>{{ next_steps }}</p>
+  </div>
+</div>
+
+<details class="details-disclosure">
+  <summary>Claim details</summary>
+  <div class="details-body">
+    <table class="kv-table">
+      <tr><th>Incident type</th><td>{{ claim.incident_type.replace('_',' ')|title }}</td></tr>
+      <tr><th>Incident date</th><td>{{ claim.incident_date }}</td></tr>
+      <tr><th>Claimed amount</th><td>${{ "%.2f"|format(claim.claimed_amount) }}</td></tr>
+      <tr><th>Policy</th><td>#{{ claim.policy_id }}, {{ claim.policy.vehicle_year }} {{ claim.policy.vehicle_make }} {{ claim.policy.vehicle_model }}</td></tr>
+      <tr><th>Coverage limit</th><td>${{ "%.2f"|format(claim.policy.coverage_limit) }}</td></tr>
+    </table>
+    <p style="margin-bottom:0.3rem"><strong>What you told us happened</strong></p>
+    <p class="helptext" style="font-size:0.9rem;color:var(--text)">{{ claim.description }}</p>
+    {% if claim.photo_filename %}
+      <a class="btn btn-secondary" href="{{ url_for('claims.uploaded_file', filename=claim.photo_filename) }}" target="_blank">View attached photo/document</a>
+    {% endif %}
+  </div>
+</details>
+{% endif %}
 {% endblock %}
