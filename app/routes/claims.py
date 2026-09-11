@@ -1,7 +1,7 @@
 import json
 import os
 import uuid
-from datetime import datetime, date
+from datetime import date
 
 from flask import (
     Blueprint, render_template, request, redirect, url_for, flash,
@@ -12,6 +12,7 @@ from werkzeug.utils import secure_filename
 from app.models import Policy, Claim, INCIDENT_TYPES
 from app.auth import login_required
 from app.claim_service import file_claim
+from app.validation import ValidationError, validate_int, validate_incident_date, validate_claimed_amount
 
 bp = Blueprint("claims", __name__, url_prefix="/claims")
 
@@ -56,14 +57,23 @@ def new_claim():
 
     if request.method == "POST":
         form = request.form
-        policy = Policy.query.get_or_404(int(form["policy_id"]))
-        incident_date = datetime.strptime(form["incident_date"], "%Y-%m-%d").date()
+        try:
+            policy_id = validate_int(form.get("policy_id"), "Policy", min_value=1)
+            incident_date = validate_incident_date(form.get("incident_date"))
+            claimed_amount = validate_claimed_amount(form.get("claimed_amount"))
+        except ValidationError as e:
+            flash(str(e), "error")
+            return render_template(
+                "claim_form.html", policies=policies, incident_types=INCIDENT_TYPES,
+                today=date.today().isoformat(), form=form,
+            ), 400
 
+        policy = Policy.query.get_or_404(policy_id)
         claim = file_claim(
             policy=policy,
             incident_type=form["incident_type"],
             incident_date=incident_date,
-            claimed_amount=float(form["claimed_amount"]),
+            claimed_amount=claimed_amount,
             description=form["description"].strip(),
             submitted_by=g.user.username,
             photo_filename=_save_photo(request.files.get("photo")),

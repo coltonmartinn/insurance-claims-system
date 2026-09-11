@@ -84,6 +84,66 @@ def test_every_status_change_is_audited(client, db_session):
     assert events[1].changed_by == "system"
 
 
+def test_negative_claimed_amount_shows_error_and_creates_nothing(client, db_session):
+    ph = make_policyholder(email="badamount@example.com")
+    policy = make_policy(ph, start_date=date.today() - timedelta(days=400))
+    user = make_user(username="badamount", policyholder=ph)
+    db_session.commit()
+
+    _login(client, user.id)
+    resp = client.post("/claims/new", data={
+        "policy_id": str(policy.id),
+        "incident_type": "collision",
+        "incident_date": (date.today() - timedelta(days=2)).isoformat(),
+        "claimed_amount": "-500",
+        "description": "Rear-ended at a stop light.",
+    })
+
+    assert resp.status_code == 400
+    assert b"Claimed amount must be at least" in resp.data
+    assert Claim.query.filter_by(policy_id=policy.id).count() == 0
+
+
+def test_future_incident_date_shows_error_and_creates_nothing(client, db_session):
+    ph = make_policyholder(email="futuredate@example.com")
+    policy = make_policy(ph, start_date=date.today() - timedelta(days=400))
+    user = make_user(username="futuredate", policyholder=ph)
+    db_session.commit()
+
+    _login(client, user.id)
+    resp = client.post("/claims/new", data={
+        "policy_id": str(policy.id),
+        "incident_type": "collision",
+        "incident_date": (date.today() + timedelta(days=5)).isoformat(),
+        "claimed_amount": "500",
+        "description": "Rear-ended at a stop light.",
+    })
+
+    assert resp.status_code == 400
+    assert b"cannot be after" in resp.data
+    assert Claim.query.filter_by(policy_id=policy.id).count() == 0
+
+
+def test_non_numeric_claimed_amount_shows_error(client, db_session):
+    ph = make_policyholder(email="nonnumeric@example.com")
+    policy = make_policy(ph, start_date=date.today() - timedelta(days=400))
+    user = make_user(username="nonnumeric", policyholder=ph)
+    db_session.commit()
+
+    _login(client, user.id)
+    resp = client.post("/claims/new", data={
+        "policy_id": str(policy.id),
+        "incident_type": "collision",
+        "incident_date": (date.today() - timedelta(days=2)).isoformat(),
+        "claimed_amount": "lots of money",
+        "description": "Rear-ended at a stop light.",
+    })
+
+    assert resp.status_code == 400
+    assert b"Claimed amount must be a number" in resp.data
+    assert Claim.query.filter_by(policy_id=policy.id).count() == 0
+
+
 def test_customer_cannot_view_another_customers_claim(client, db_session):
     ph_a = make_policyholder(email="a@example.com")
     policy_a = make_policy(ph_a, start_date=date.today() - timedelta(days=400))

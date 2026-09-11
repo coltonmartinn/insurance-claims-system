@@ -168,6 +168,20 @@ curl -H "X-API-Key: dev-api-key-change-me" \
   "http://127.0.0.1:5000/api/claims?status=pending_review&min_score=50"
 ```
 
+## Input validation
+
+`app/validation.py` validates every numeric and date field submitted through
+the quote form, the claim form, and the JSON API (vehicle year, coverage
+limit, prior claims count, ZIP/territory, claimed amount, incident date,
+date of birth) -- type, range, and domain-specific bounds (a claim can't be
+dated in the future, a driver must be between 16 and 100, a coverage limit
+has a sane floor and ceiling). A failed validator raises `ValidationError`
+with a message naming the exact constraint that failed; routes catch it and
+either flash the message and re-render the form with the submitted values
+intact (web) or return it as a 400 JSON error (API) -- nothing reaches the
+database until every field passes, and nothing crashes into a raw 500 on
+bad input.
+
 ## Testing
 
 ```bash
@@ -239,6 +253,7 @@ app/
   models.py            Data model + claim status lifecycle
   rating.py             Premium calculation for the quote flow
   underwriting.py        Explainable underwriting risk estimate at quote time (Safe/Moderate/Risky)
+  validation.py          Numeric/date validators shared by the web forms and the API
   triage.py             Rules-based risk scoring (the centerpiece)
   features.py           Feature extraction shared by triage.py and ml.py
   ml.py                 Optional logistic regression secondary signal
@@ -247,7 +262,7 @@ app/
   routes/               Flask blueprints: quotes, claims, adjuster, auth, dashboard, api
   templates/, static/   Server-rendered views
 tests/
-  test_triage.py, test_rating.py, test_underwriting.py   Unit tests, no DB
+  test_triage.py, test_rating.py, test_underwriting.py, test_validation.py   Unit tests, no DB
   test_claims_flow.py, test_adjuster_flow.py, test_quotes.py, test_api.py
                                           Integration tests via the Flask test client
 tools/

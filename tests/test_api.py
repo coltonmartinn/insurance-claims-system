@@ -74,6 +74,38 @@ def test_create_claim_via_api_with_unknown_policy_returns_404(client, db_session
     assert resp.status_code == 404
 
 
+def test_create_claim_via_api_with_negative_amount_returns_400(client, db_session):
+    ph = make_policyholder()
+    policy = make_policy(ph, coverage_limit=50000, start_date=date.today() - timedelta(days=400))
+    db_session.commit()
+
+    resp = client.post("/api/claims", headers={"X-API-Key": API_KEY}, json={
+        "policy_id": policy.id,
+        "incident_type": "collision",
+        "incident_date": (date.today() - timedelta(days=2)).isoformat(),
+        "claimed_amount": -100,
+        "description": "test",
+    })
+    assert resp.status_code == 400
+    assert "Claimed amount must be at least" in resp.get_json()["error"]
+
+
+def test_create_claim_via_api_with_bad_date_format_returns_400(client, db_session):
+    ph = make_policyholder()
+    policy = make_policy(ph, coverage_limit=50000, start_date=date.today() - timedelta(days=400))
+    db_session.commit()
+
+    resp = client.post("/api/claims", headers={"X-API-Key": API_KEY}, json={
+        "policy_id": policy.id,
+        "incident_type": "collision",
+        "incident_date": "06/01/2024",
+        "claimed_amount": 500,
+        "description": "test",
+    })
+    assert resp.status_code == 400
+    assert "valid date" in resp.get_json()["error"]
+
+
 def test_list_claims_filters_by_status(client, db_session):
     ph = make_policyholder()
     policy = make_policy(ph, coverage_limit=50000, start_date=date.today() - timedelta(days=400))

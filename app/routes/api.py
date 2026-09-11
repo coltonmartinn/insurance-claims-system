@@ -6,7 +6,6 @@ partner integration to call directly. Auth is a single static API key
 building out OAuth/JWT for a portfolio project.
 """
 import json
-from datetime import datetime
 from functools import wraps
 
 from flask import Blueprint, jsonify, request, current_app, abort
@@ -14,6 +13,7 @@ from flask import Blueprint, jsonify, request, current_app, abort
 from app.extensions import db
 from app.models import Claim, Policy
 from app.claim_service import file_claim
+from app.validation import ValidationError, validate_incident_date, validate_claimed_amount
 
 bp = Blueprint("api", __name__, url_prefix="/api")
 
@@ -95,10 +95,10 @@ def create_claim():
         return jsonify({"error": "policy not found"}), 404
 
     try:
-        incident_date = datetime.strptime(payload["incident_date"], "%Y-%m-%d").date()
-        claimed_amount = float(payload["claimed_amount"])
-    except (ValueError, TypeError):
-        return jsonify({"error": "invalid incident_date or claimed_amount"}), 400
+        incident_date = validate_incident_date(payload.get("incident_date"))
+        claimed_amount = validate_claimed_amount(payload.get("claimed_amount"))
+    except ValidationError as e:
+        return jsonify({"error": str(e)}), 400
 
     claim = file_claim(
         policy=policy,

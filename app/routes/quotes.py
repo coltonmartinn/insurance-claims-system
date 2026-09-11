@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import date
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 
@@ -6,24 +6,39 @@ from app.extensions import db
 from app.models import Policyholder, Policy
 from app.rating import calculate_premium
 from app.underwriting import assess_underwriting_risk
+from app.validation import (
+    ValidationError, validate_date, validate_date_of_birth, validate_vehicle_year,
+    validate_prior_claims_count, validate_coverage_limit, validate_territory,
+    MIN_VEHICLE_YEAR, MAX_VEHICLE_YEAR, MIN_COVERAGE_LIMIT, MAX_PRIOR_CLAIMS,
+)
 
 bp = Blueprint("quotes", __name__, url_prefix="/quote")
 
-
-def _parse_date(value):
-    return datetime.strptime(value, "%Y-%m-%d").date()
+FORM_BOUNDS = dict(
+    min_vehicle_year=MIN_VEHICLE_YEAR, max_vehicle_year=MAX_VEHICLE_YEAR,
+    min_coverage_limit=MIN_COVERAGE_LIMIT, max_prior_claims=MAX_PRIOR_CLAIMS,
+)
 
 
 @bp.route("/", methods=["GET", "POST"])
 def new_quote():
     if request.method == "POST":
         form = request.form
-        dob = _parse_date(form["date_of_birth"])
-        start_date = _parse_date(form["start_date"]) if form.get("start_date") else date.today()
-        vehicle_year = int(form["vehicle_year"])
-        prior_claims_count = int(form["prior_claims_count"])
-        territory = form["territory"].strip()
-        coverage_limit = float(form["coverage_limit"])
+        try:
+            dob = validate_date_of_birth(form.get("date_of_birth"))
+            start_date = (
+                validate_date(form.get("start_date"), "Policy start date")
+                if form.get("start_date") else date.today()
+            )
+            vehicle_year = validate_vehicle_year(form.get("vehicle_year"))
+            prior_claims_count = validate_prior_claims_count(form.get("prior_claims_count"))
+            territory = validate_territory(form.get("territory"))
+            coverage_limit = validate_coverage_limit(form.get("coverage_limit"))
+        except ValidationError as e:
+            flash(str(e), "error")
+            return render_template(
+                "quote_form.html", today=date.today().isoformat(), form=form, **FORM_BOUNDS,
+            ), 400
 
         policyholder = Policyholder(
             name=form["name"].strip(),
@@ -60,7 +75,7 @@ def new_quote():
         flash("Quote generated and policy created.", "success")
         return redirect(url_for("quotes.quote_result", policy_id=policy.id))
 
-    return render_template("quote_form.html", today=date.today().isoformat())
+    return render_template("quote_form.html", today=date.today().isoformat(), **FORM_BOUNDS)
 
 
 @bp.route("/<int:policy_id>")
