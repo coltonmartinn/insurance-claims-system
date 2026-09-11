@@ -243,6 +243,21 @@ h2 { font-size: 1.05rem; margin-top: 2.25rem; margin-bottom: 0.6rem; color: var(
 /* ============================================================ forms */
 
 label { display: block; font-size: 0.84rem; font-weight: 600; margin: 0.85rem 0 0.3rem; color: var(--navy-light); }
+
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--red);
+  background: var(--red-bg);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  margin: 0.3rem 0;
+}
+.field-error::before { content: "!"; display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 50%; background: var(--red); color: white; font-size: 0.72rem; font-weight: 800; flex-shrink: 0; }
+.field-error + input, .field-error + select, .field-error + textarea { border-color: var(--red); }
 input, select, textarea {
   width: 100%;
   padding: 0.55rem 0.65rem;

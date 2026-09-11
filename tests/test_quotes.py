@@ -82,3 +82,28 @@ def test_quote_form_repopulates_submitted_values_after_error(client, db_session)
 
     assert resp.status_code == 400
     assert b"Repopulate Me" in resp.data
+
+
+def test_field_error_renders_immediately_above_its_input_not_as_a_top_banner(client, db_session):
+    data = {**VALID_QUOTE, "coverage_limit": "not-a-number"}
+    resp = client.post("/quote/", data=data)
+    html = resp.data.decode()
+
+    assert resp.status_code == 400
+    error_pos = html.index("Coverage limit must be a number")
+    input_pos = html.index('name="coverage_limit"')
+    # The error markup must sit between the label and the input it's about,
+    # not up in the generic flash banner at the top of the page.
+    assert error_pos < input_pos
+    assert input_pos - error_pos < 400
+    assert "flash-error" not in html
+
+
+def test_field_error_only_appears_on_the_failing_field(client, db_session):
+    data = {**VALID_QUOTE, "vehicle_year": "1899"}
+    resp = client.post("/quote/", data=data)
+    html = resp.data.decode()
+
+    assert "Vehicle year must be at least" in html
+    # Only one field failed validation -- no stray error markup elsewhere.
+    assert html.count("field-error") == 1

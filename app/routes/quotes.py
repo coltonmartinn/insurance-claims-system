@@ -27,7 +27,7 @@ def new_quote():
         try:
             dob = validate_date_of_birth(form.get("date_of_birth"))
             start_date = (
-                validate_date(form.get("start_date"), "Policy start date")
+                validate_date(form.get("start_date"), "Policy start date", field="start_date")
                 if form.get("start_date") else date.today()
             )
             vehicle_year = validate_vehicle_year(form.get("vehicle_year"))
@@ -35,9 +35,9 @@ def new_quote():
             territory = validate_territory(form.get("territory"))
             coverage_limit = validate_coverage_limit(form.get("coverage_limit"))
         except ValidationError as e:
-            flash(str(e), "error")
             return render_template(
-                "quote_form.html", today=date.today().isoformat(), form=form, **FORM_BOUNDS,
+                "quote_form.html", today=date.today().isoformat(), form=form,
+                field_errors={e.field: str(e)}, **FORM_BOUNDS,
             ), 400
 
         policyholder = Policyholder(

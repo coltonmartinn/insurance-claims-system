@@ -144,6 +144,29 @@ def test_non_numeric_claimed_amount_shows_error(client, db_session):
     assert Claim.query.filter_by(policy_id=policy.id).count() == 0
 
 
+def test_claim_field_error_renders_above_its_input_not_as_a_top_banner(client, db_session):
+    ph = make_policyholder(email="positiontest@example.com")
+    policy = make_policy(ph, start_date=date.today() - timedelta(days=400))
+    user = make_user(username="positiontest", policyholder=ph)
+    db_session.commit()
+
+    _login(client, user.id)
+    resp = client.post("/claims/new", data={
+        "policy_id": str(policy.id),
+        "incident_type": "collision",
+        "incident_date": (date.today() - timedelta(days=2)).isoformat(),
+        "claimed_amount": "lots of money",
+        "description": "Rear-ended at a stop light.",
+    })
+    html = resp.data.decode()
+
+    error_pos = html.index("Claimed amount must be a number")
+    input_pos = html.index('name="claimed_amount"')
+    assert error_pos < input_pos
+    assert input_pos - error_pos < 200
+    assert "flash-error" not in html
+
+
 def test_customer_cannot_view_another_customers_claim(client, db_session):
     ph_a = make_policyholder(email="a@example.com")
     policy_a = make_policy(ph_a, start_date=date.today() - timedelta(days=400))

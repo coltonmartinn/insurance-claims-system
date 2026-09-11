@@ -191,11 +191,13 @@ limit, prior claims count, ZIP/territory, claimed amount, incident date,
 date of birth): type, range, and domain-specific bounds (a claim can't be
 dated in the future, a driver must be between 16 and 100, a coverage limit
 has a sane floor and ceiling). A failed validator raises `ValidationError`
-with a message naming the exact constraint that failed; routes catch it and
-either flash the message and re-render the form with the submitted values
-intact (web) or return it as a 400 JSON error (API). Nothing reaches the
-database until every field passes, and nothing crashes into a raw 500 on
-bad input.
+carrying both a plain-English message naming the exact constraint that
+failed and a `field` slug matching the HTML input's `name`. Routes catch it
+and render the message inline, immediately above the specific field it's
+about, with the form's other submitted values left intact, rather than a
+generic banner at the top of the page (or, for the API, a 400 JSON error
+naming the offending field). Nothing reaches the database until every
+field passes, and nothing crashes into a raw 500 on bad input.
 
 ## Access control
 

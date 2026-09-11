@@ -98,7 +98,7 @@ def create_claim():
         incident_date = validate_incident_date(payload.get("incident_date"))
         claimed_amount = validate_claimed_amount(payload.get("claimed_amount"))
     except ValidationError as e:
-        return jsonify({"error": str(e)}), 400
+        return jsonify({"error": str(e), "field": e.field}), 400
 
     claim = file_claim(
         policy=policy,

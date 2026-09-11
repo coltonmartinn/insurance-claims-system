@@ -31,8 +31,7 @@ def _save_photo(file_storage):
         return None
     ext = file_storage.filename.rsplit(".", 1)[-1].lower() if "." in file_storage.filename else ""
     if ext not in ALLOWED_PHOTO_EXTENSIONS:
-        flash(f"Unsupported file type: .{ext}", "error")
-        return None
+        raise ValidationError(f"Unsupported file type: .{ext}", field="photo")
     filename = f"{uuid.uuid4().hex}_{secure_filename(file_storage.filename)}"
     file_storage.save(os.path.join(current_app.config["UPLOAD_FOLDER"], filename))
     return filename
@@ -68,14 +67,14 @@ def new_claim():
     if request.method == "POST":
         form = request.form
         try:
-            policy_id = validate_int(form.get("policy_id"), "Policy", min_value=1)
+            policy_id = validate_int(form.get("policy_id"), "Policy", min_value=1, field="policy_id")
             incident_date = validate_incident_date(form.get("incident_date"))
             claimed_amount = validate_claimed_amount(form.get("claimed_amount"))
+            photo_filename = _save_photo(request.files.get("photo"))
         except ValidationError as e:
-            flash(str(e), "error")
             return render_template(
                 "claim_form.html", policies=policies, incident_types=INCIDENT_TYPES,
-                today=date.today().isoformat(), form=form,
+                today=date.today().isoformat(), form=form, field_errors={e.field: str(e)},
             ), 400
 
         policy = Policy.query.get_or_404(policy_id)
@@ -92,7 +91,7 @@ def new_claim():
             claimed_amount=claimed_amount,
             description=form["description"].strip(),
             submitted_by=g.user.username,
-            photo_filename=_save_photo(request.files.get("photo")),
+            photo_filename=photo_filename,
         )
 
         flash("Claim submitted.", "success")

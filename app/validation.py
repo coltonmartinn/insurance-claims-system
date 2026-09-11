@@ -3,10 +3,11 @@ Small, explicit validators for user-submitted numeric and date fields.
 
 Consistent with the rest of the app (rules that name exactly why they
 fired), each validator raises ValidationError with a plain-English message
-naming the exact constraint that failed -- never a generic "invalid input"
-and never an unhandled exception that turns into a raw 500 page. Callers
-(web routes and the JSON API) catch ValidationError and turn the message
-into a flashed error or a 400 JSON response.
+naming the exact constraint that failed, never a generic "invalid input"
+and never an unhandled exception that turns into a raw 500 page. Each error
+also carries a `field` slug matching the HTML input's `name` attribute, so
+a route can render the message right above the specific field it's about
+instead of a generic banner at the top of the page.
 """
 from datetime import date, datetime
 
@@ -29,52 +30,64 @@ EARLIEST_REASONABLE_DATE = date(1900, 1, 1)
 
 
 class ValidationError(ValueError):
-    """Raised when a submitted field fails validation. The message is
-    written to be shown to the user directly (flashed, or returned as a
-    JSON error), not logged for a developer to decode."""
+    """Raised when a submitted field fails validation. `field` is the HTML
+    input name the error belongs to (for placing the message next to the
+    right field); the message itself is written to be shown to the user
+    directly (inline, flashed, or returned as a JSON error)."""
+
+    def __init__(self, message, field=None):
+        super().__init__(message)
+        self.field = field
 
 
-def validate_int(raw_value, field_name, min_value=None, max_value=None):
+def _slugify(field_name):
+    return field_name.lower().replace(" ", "_").replace("/", "_")
+
+
+def validate_int(raw_value, field_name, min_value=None, max_value=None, field=None):
+    field = field or _slugify(field_name)
     try:
         value = int(raw_value)
     except (TypeError, ValueError):
-        raise ValidationError(f"{field_name} must be a whole number.")
-    _check_bounds(value, field_name, min_value, max_value)
+        raise ValidationError(f"{field_name} must be a whole number.", field=field)
+    _check_bounds(value, field_name, min_value, max_value, field)
     return value
 
 
-def validate_float(raw_value, field_name, min_value=None, max_value=None):
+def validate_float(raw_value, field_name, min_value=None, max_value=None, field=None):
+    field = field or _slugify(field_name)
     try:
         value = float(raw_value)
     except (TypeError, ValueError):
-        raise ValidationError(f"{field_name} must be a number.")
-    _check_bounds(value, field_name, min_value, max_value)
+        raise ValidationError(f"{field_name} must be a number.", field=field)
+    _check_bounds(value, field_name, min_value, max_value, field)
     return value
 
 
-def _check_bounds(value, field_name, min_value, max_value):
+def _check_bounds(value, field_name, min_value, max_value, field):
     if min_value is not None and value < min_value:
-        raise ValidationError(f"{field_name} must be at least {min_value:g}.")
+        raise ValidationError(f"{field_name} must be at least {min_value:g}.", field=field)
     if max_value is not None and value > max_value:
-        raise ValidationError(f"{field_name} must be at most {max_value:g}.")
+        raise ValidationError(f"{field_name} must be at most {max_value:g}.", field=field)
 
 
-def validate_date(raw_value, field_name, not_before=None, not_after=None):
+def validate_date(raw_value, field_name, not_before=None, not_after=None, field=None):
+    field = field or _slugify(field_name)
     try:
         value = datetime.strptime(raw_value, "%Y-%m-%d").date()
     except (TypeError, ValueError):
-        raise ValidationError(f"{field_name} must be a valid date (YYYY-MM-DD).")
+        raise ValidationError(f"{field_name} must be a valid date (YYYY-MM-DD).", field=field)
     if not_before is not None and value < not_before:
-        raise ValidationError(f"{field_name} cannot be before {not_before.isoformat()}.")
+        raise ValidationError(f"{field_name} cannot be before {not_before.isoformat()}.", field=field)
     if not_after is not None and value > not_after:
-        raise ValidationError(f"{field_name} cannot be after {not_after.isoformat()}.")
+        raise ValidationError(f"{field_name} cannot be after {not_after.isoformat()}.", field=field)
     return value
 
 
 def validate_territory(raw_value):
     value = (raw_value or "").strip()
     if not value.isdigit() or len(value) != 5:
-        raise ValidationError("Territory must be a 5-digit ZIP code.")
+        raise ValidationError("Territory must be a 5-digit ZIP code.", field="territory")
     return value
 
 
@@ -106,10 +119,15 @@ def _age_from_dob(dob):
 
 
 def validate_date_of_birth(raw_value):
-    dob = validate_date(raw_value, "Date of birth", not_before=EARLIEST_REASONABLE_DATE, not_after=date.today())
+    dob = validate_date(
+        raw_value, "Date of birth", not_before=EARLIEST_REASONABLE_DATE, not_after=date.today(),
+        field="date_of_birth",
+    )
     age = _age_from_dob(dob)
     if age < MIN_DRIVER_AGE:
-        raise ValidationError(f"Driver must be at least {MIN_DRIVER_AGE} years old to be quoted.")
+        raise ValidationError(f"Driver must be at least {MIN_DRIVER_AGE} years old to be quoted.", field="date_of_birth")
     if age > MAX_DRIVER_AGE:
-        raise ValidationError(f"That date of birth implies an age over {MAX_DRIVER_AGE} -- please double-check it.")
+        raise ValidationError(
+            f"That date of birth implies an age over {MAX_DRIVER_AGE}, please double-check it.", field="date_of_birth",
+        )
     return dob
