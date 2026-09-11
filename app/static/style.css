@@ -113,6 +113,8 @@ body {
 .sidebar-user-info .icon { background: rgba(255, 255, 255, 0.08); border-radius: 50%; padding: 4px; }
 .sidebar-user-name { font-size: 0.85rem; font-weight: 600; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
 .sidebar-user-role { font-size: 0.72rem; color: #7f96b0; text-transform: capitalize; }
+.sidebar-user-actions { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+
 .sidebar-logout {
   color: #a9bfd6;
   display: flex;
@@ -122,6 +124,32 @@ body {
   flex-shrink: 0;
 }
 .sidebar-logout:hover { background: rgba(255, 255, 255, 0.08); color: white; }
+
+.reviewer-toggle-form { display: flex; }
+.reviewer-toggle {
+  width: 34px;
+  height: 19px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.18);
+  padding: 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s ease;
+  flex-shrink: 0;
+}
+.reviewer-toggle-knob {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: white;
+  display: block;
+  transition: transform 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+.reviewer-toggle.is-on { background: var(--accent-light); }
+.reviewer-toggle.is-on .reviewer-toggle-knob { transform: translateX(15px); }
 
 .main-area { flex: 1; min-width: 0; }
 
