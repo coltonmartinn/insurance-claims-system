@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Quote #{{ policy.id }}{% endblock %}
+{% block content %}
+<h1>Policy Created</h1>
+<p class="subtitle">Policy #{{ policy.id }} for {{ policy.policyholder.name }}</p>
+
+<div class="stat-row">
+  <div class="stat">
+    <div class="value">${{ "%.2f"|format(policy.premium) }}</div>
+    <div class="label">Annual Premium</div>
+  </div>
+  <div class="stat">
+    <div class="value">${{ "%.0f"|format(policy.coverage_limit) }}</div>
+    <div class="label">Coverage Limit</div>
+  </div>
+  <div class="stat">
+    <div class="value">{{ policy.vehicle_year }} {{ policy.vehicle_make }}</div>
+    <div class="label">{{ policy.vehicle_model }}</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0">Premium Breakdown</h2>
+  <table>
+    <thead><tr><th>Factor</th><th>Multiplier</th><th>Explanation</th></tr></thead>
+    <tbody>
+      {% for step in breakdown %}
+      <tr>
+        <td>{{ step.factor }}</td>
+        <td>{{ "×%.3f"|format(step.multiplier) if step.multiplier is not none else "&mdash;"|safe }}</td>
+        <td>{{ step.explanation }}</td>
+      </tr>
+      {% endfor %}
+      <tr><td colspan="2"><strong>Final annual premium</strong></td><td><strong>${{ "%.2f"|format(policy.premium) }}</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<a class="btn" href="{{ url_for('quotes.new_quote') }}">New Quote</a>
+{% if current_user %}<a class="btn btn-secondary" href="{{ url_for('claims.new_claim') }}">File a Claim</a>{% endif %}
+{% endblock %}

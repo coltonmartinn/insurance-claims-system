@@ -1,0 +1,32 @@
+{# Minimal hand-drawn line-icon set (24x24, stroke-based) so the app doesn't depend on an icon font/library. #}
+{% macro icon(name, size=18) %}
+<svg class="icon" width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+{%- if name == 'dashboard' %}
+  <rect x="3.5" y="12" width="4" height="8.5" rx="1"/><rect x="10" y="7" width="4" height="13.5" rx="1"/><rect x="16.5" y="3.5" width="4" height="17" rx="1"/>
+{%- elif name == 'queue' %}
+  <rect x="4.5" y="3.5" width="15" height="17" rx="2"/><path d="M8.5 3.5V2.5a1 1 0 011-1h5a1 1 0 011 1v1"/><path d="M8 12l2.3 2.3L16 8.6"/>
+{%- elif name == 'claims' %}
+  <path d="M6 3.5h9l4 4V20a1 1 0 01-1 1H6a1 1 0 01-1-1V4.5a1 1 0 011-1z"/><path d="M15 3.5V8h4"/><path d="M8 12.5h8M8 15.5h8M8 9.5h4"/>
+{%- elif name == 'new-claim' %}
+  <circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>
+{%- elif name == 'quote' %}
+  <path d="M4 8.5A4.5 4.5 0 018.5 4H16l4 4v7.5A4.5 4.5 0 0115.5 20h-7A4.5 4.5 0 014 15.5v-7z"/><path d="M12 8v8M9.5 9.8c0-1 .9-1.8 2.5-1.8s2.5.7 2.5 1.6c0 2.2-5 1.2-5 3.5 0 .9 1 1.7 2.5 1.7s2.5-.7 2.5-1.7"/>
+{%- elif name == 'logout' %}
+  <path d="M9 4.5H6a1.5 1.5 0 00-1.5 1.5v12A1.5 1.5 0 006 19.5h3"/><path d="M14.5 16l4-4-4-4"/><path d="M18 12H9"/>
+{%- elif name == 'user' %}
+  <circle cx="12" cy="8.3" r="3.3"/><path d="M5 20c0-3.6 3.1-6.5 7-6.5s7 2.9 7 6.5"/>
+{%- elif name == 'shield' %}
+  <path d="M12 3l7 2.6v5.4c0 4.6-3 8.8-7 10-4-1.2-7-5.4-7-10V5.6L12 3z"/><path d="M9 12l2.2 2.2L15.5 9.5"/>
+{%- elif name == 'photo' %}
+  <rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.6"/><path d="M20 15.5l-4.8-4.8-3.2 3.2-2-2L4 17"/>
+{%- elif name == 'chevron' %}
+  <path d="M9 6l6 6-6 6"/>
+{%- elif name == 'money' %}
+  <circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.3c0-1.1 1-2 2.5-2s2.5.8 2.5 1.8c0 2.4-5 1.3-5 3.7 0 1 1 1.8 2.5 1.8s2.5-.8 2.5-1.8"/>
+{%- elif name == 'flag' %}
+  <path d="M6 3.5v17"/><path d="M6 4.5h11l-2.5 3.5L17 11.5H6"/>
+{%- elif name == 'clock' %}
+  <circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>
+{%- endif %}
+</svg>
+{%- endmacro %}

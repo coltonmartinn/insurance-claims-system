@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Claims Triage{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+{% from "_icons.html" import icon %}
+<body>
+{% if current_user %}
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="sidebar-brand" href="{{ url_for('index') }}">{{ icon('shield', 22) }}<span>Meridian Auto</span></a>
+
+      <nav class="sidebar-nav">
+        {% if current_user.role == 'adjuster' %}
+          <a href="{{ url_for('adjuster.queue') }}" class="{{ 'active' if request.endpoint == 'adjuster.queue' }}">{{ icon('queue') }}<span>Review Queue</span></a>
+          <a href="{{ url_for('dashboard.dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard.dashboard' }}">{{ icon('dashboard') }}<span>Dashboard</span></a>
+          <a href="{{ url_for('claims.list_claims') }}" class="{{ 'active' if request.endpoint == 'claims.list_claims' }}">{{ icon('claims') }}<span>All Claims</span></a>
+        {% else %}
+          <a href="{{ url_for('claims.list_claims') }}" class="{{ 'active' if request.endpoint == 'claims.list_claims' }}">{{ icon('claims') }}<span>My Claims</span></a>
+          <a href="{{ url_for('claims.new_claim') }}" class="{{ 'active' if request.endpoint == 'claims.new_claim' }}">{{ icon('new-claim') }}<span>File a Claim</span></a>
+        {% endif %}
+        <a href="{{ url_for('quotes.new_quote') }}" class="{{ 'active' if request.endpoint == 'quotes.new_quote' }}">{{ icon('quote') }}<span>New Quote</span></a>
+      </nav>
+
+      <div class="sidebar-user">
+        <div class="sidebar-user-info">
+          {{ icon('user', 22) }}
+          <div>
+            <div class="sidebar-user-name">{{ current_user.display_name }}</div>
+            <div class="sidebar-user-role">{{ current_user.role }}</div>
+          </div>
+        </div>
+        <a href="{{ url_for('auth.logout') }}" class="sidebar-logout" title="Log out">{{ icon('logout') }}</a>
+      </div>
+    </aside>
+
+    <div class="main-area">
+{% else %}
+  <header class="topbar-public">
+    <a class="brand" href="{{ url_for('index') }}">{{ icon('shield', 20) }}<span>Meridian Auto &mdash; Claims Triage</span></a>
+    <nav>
+      <a href="{{ url_for('quotes.new_quote') }}">New Quote</a>
+      <a class="btn-nav" href="{{ url_for('auth.login') }}">Log in</a>
+    </nav>
+  </header>
+{% endif %}
+
+  <main class="container {{ '' if current_user else 'container-public' }}">
+    {% include "_flashes.html" %}
+    {% block content %}{% endblock %}
+  </main>
+
+{% if current_user %}
+    </div>
+  </div>
+{% endif %}
+</body>
+</html>

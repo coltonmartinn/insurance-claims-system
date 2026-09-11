@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% from "_risk.html" import score_ring %}
+{% block title %}Claim #{{ claim.id }}{% endblock %}
+{% block content %}
+<div class="claim-header">
+  <div>
+    <div class="claim-header-id">Claim #{{ claim.id }}</div>
+    <h1 style="margin-bottom:0.4rem">{{ claim.incident_type.replace('_',' ')|title }} &mdash; ${{ "%.2f"|format(claim.claimed_amount) }}</h1>
+    <span class="badge badge-{{ claim.status }}">{{ claim.status.replace('_',' ')|title }}</span>
+  </div>
+  {% if current_user.role == 'adjuster' and claim.risk_score is not none %}
+    {{ score_ring(claim.risk_score, claim.risk_priority) }}
+  {% endif %}
+</div>
+
+<p class="subtitle" style="margin-top:-0.75rem;margin-bottom:1.25rem;">Policy #{{ claim.policy_id }} &mdash; {{ claim.policy.policyholder.name }} &mdash; {{ claim.policy.vehicle_year }} {{ claim.policy.vehicle_make }} {{ claim.policy.vehicle_model }}</p>
+
+<div class="grid-2">
+  <div class="card">
+    <h2 style="margin-top:0">Claim Details</h2>
+    <table class="kv-table">
+      <tr><th>Incident type</th><td>{{ claim.incident_type.replace('_',' ')|title }}</td></tr>
+      <tr><th>Incident date</th><td>{{ claim.incident_date }}</td></tr>
+      <tr><th>Filed</th><td>{{ claim.claim_date.strftime('%Y-%m-%d %H:%M') }}</td></tr>
+      <tr><th>Claimed amount</th><td>${{ "%.2f"|format(claim.claimed_amount) }}</td></tr>
+      <tr><th>Coverage limit</th><td>${{ "%.2f"|format(claim.policy.coverage_limit) }}</td></tr>
+      <tr><th>Prior claims on policy</th><td>{{ claim.policy.prior_claims_count }}</td></tr>
+      <tr><th>Policy start</th><td>{{ claim.policy.start_date }}</td></tr>
+    </table>
+    <p style="margin-bottom:0.3rem"><strong>Description</strong></p>
+    <p class="helptext" style="font-size:0.9rem;color:var(--text)">{{ claim.description }}</p>
+    {% if claim.photo_filename %}
+      <a class="btn btn-secondary" href="{{ url_for('claims.uploaded_file', filename=claim.photo_filename) }}" target="_blank">View attached photo/document</a>
+    {% endif %}
+  </div>
+
+  {% if current_user.role == 'adjuster' %}
+  <div class="card">
+    <h2 style="margin-top:0">Risk Assessment</h2>
+    {% if claim.risk_score is not none %}
+      {% if claim.ml_score is not none %}
+        <p class="helptext">Logistic regression secondary signal (not used for routing): <strong style="color:var(--text)">{{ "%.0f%%"|format(claim.ml_score * 100) }}</strong> estimated fraud probability</p>
+      {% endif %}
+      <h3 style="font-size:0.85rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted);margin-bottom:0.6rem;">Rules that fired</h3>
+      {% if fired_rules %}
+      <ul class="rule-list">
+        {% for rule in fired_rules %}
+          <li><span class="rule-points">+{{ rule.points }}</span><span>{{ rule.reason }}</span></li>
+        {% endfor %}
+      </ul>
+      {% else %}
+        <p class="helptext">No risk rules fired on this claim.</p>
+      {% endif %}
+    {% else %}
+      <p class="helptext">Not yet scored.</p>
+    {% endif %}
+
+    {% if claim.status == 'pending_review' %}
+    <h2>Adjuster Action</h2>
+    <form method="post" action="{{ url_for('adjuster.transition', claim_id=claim.id) }}">
+      <label for="notes">Notes</label>
+      <textarea name="notes" id="notes" placeholder="Reason for this decision (optional)"></textarea>
+      <button type="submit" name="action" value="approve">Approve</button>
+      <button type="submit" name="action" value="deny" class="btn-deny">Deny</button>
+      {% if claim.risk_priority == 'high' %}
+        <button type="submit" name="action" value="lower_priority" class="btn-secondary">Lower Priority</button>
+      {% endif %}
+    </form>
+    {% elif claim.status == 'approved' %}
+    <h2>Adjuster Action</h2>
+    <form method="post" action="{{ url_for('adjuster.transition', claim_id=claim.id) }}">
+      <label for="notes">Notes</label>
+      <textarea name="notes" id="notes" placeholder="Payment notes (optional)"></textarea>
+      <button type="submit" name="action" value="mark_paid">Mark Paid</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0">Audit Trail</h2>
+  <div class="audit-trail">
+    {% for event in claim.status_events %}
+    <div class="event">
+      <div><strong>{{ event.old_status or 'created' }} &rarr; {{ event.new_status }}</strong></div>
+      <div class="event-meta">{{ event.timestamp.strftime('%Y-%m-%d %H:%M') }} by {{ event.changed_by }}</div>
+      {% if event.reason %}<div style="font-size:0.9rem;margin-top:0.15rem;">{{ event.reason }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

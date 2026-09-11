@@ -1,0 +1,22 @@
+{# Shared risk-score visualizations. max_score is a soft ceiling (not a hard cap on the underlying score) used only to scale the bar/ring. #}
+
+{% macro risk_meter(score, priority, max_score=90) %}
+{% set pct = [(score / max_score * 100) | round(0, 'floor'), 100] | min %}
+<div class="risk-meter">
+  <div class="risk-meter-track"><div class="risk-meter-fill risk-{{ priority }}" style="width: {{ pct }}%;"></div></div>
+  <span class="risk-meter-value">{{ score }}</span>
+</div>
+{% endmacro %}
+
+{% macro score_ring(score, priority, max_score=90, size=96) %}
+{% set circumference = 251.2 %}
+{% set frac = [score / max_score, 1] | min %}
+{% set offset = circumference * (1 - frac) %}
+<svg class="score-ring" viewBox="0 0 96 96" width="{{ size }}" height="{{ size }}">
+  <circle class="ring-bg" cx="48" cy="48" r="40"/>
+  <circle class="ring-fill risk-{{ priority }}" cx="48" cy="48" r="40"
+          stroke-dasharray="{{ circumference }}" stroke-dashoffset="{{ offset }}"
+          transform="rotate(-90 48 48)"/>
+  <text x="48" y="53" text-anchor="middle" font-size="26">{{ score }}</text>
+</svg>
+{% endmacro %}

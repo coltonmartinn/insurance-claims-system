@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}New Quote{% endblock %}
+{% block content %}
+<h1>Get a Quote</h1>
+<p class="subtitle">Premium is computed from a small set of weighted rating factors &mdash; see the breakdown after you submit.</p>
+
+<div class="card">
+  <form method="post">
+    <h2 style="margin-top:0">Policyholder</h2>
+    <div class="grid-2">
+      <div>
+        <label for="name">Full name</label>
+        <input type="text" name="name" id="name" required>
+      </div>
+      <div>
+        <label for="email">Email</label>
+        <input type="email" name="email" id="email" required>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div>
+        <label for="phone">Phone</label>
+        <input type="text" name="phone" id="phone">
+      </div>
+      <div>
+        <label for="date_of_birth">Date of birth</label>
+        <input type="date" name="date_of_birth" id="date_of_birth" required>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div>
+        <label for="address">Address</label>
+        <input type="text" name="address" id="address">
+      </div>
+      <div>
+        <label for="territory">Territory (ZIP code)</label>
+        <input type="text" name="territory" id="territory" required pattern="\d{5}" placeholder="e.g. 44107">
+      </div>
+    </div>
+
+    <h2>Vehicle &amp; Coverage</h2>
+    <div class="grid-2">
+      <div>
+        <label for="vehicle_year">Vehicle year</label>
+        <input type="number" name="vehicle_year" id="vehicle_year" min="1980" max="2027" required>
+      </div>
+      <div>
+        <label for="vehicle_make">Make</label>
+        <input type="text" name="vehicle_make" id="vehicle_make" required>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div>
+        <label for="vehicle_model">Model</label>
+        <input type="text" name="vehicle_model" id="vehicle_model" required>
+      </div>
+      <div>
+        <label for="coverage_limit">Coverage limit ($)</label>
+        <input type="number" name="coverage_limit" id="coverage_limit" min="5000" step="500" value="50000" required>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div>
+        <label for="prior_claims_count">Prior claims (last 5 years)</label>
+        <input type="number" name="prior_claims_count" id="prior_claims_count" min="0" value="0" required>
+      </div>
+      <div>
+        <label for="start_date">Policy start date</label>
+        <input type="date" name="start_date" id="start_date" value="{{ today }}" required>
+      </div>
+    </div>
+
+    <button type="submit">Calculate Premium &amp; Create Policy</button>
+  </form>
+</div>
+{% endblock %}

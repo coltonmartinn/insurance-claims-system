@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "_risk.html" import risk_meter %}
+{% block title %}Review Queue{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Adjuster Review Queue</h1>
+    <p class="subtitle">Every claim below needs a human decision. Sorted by risk score, highest first.</p>
+  </div>
+</div>
+
+<div class="card">
+  {% if claims %}
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Policy</th><th>Type</th><th>Amount</th><th>Risk Score</th><th>Priority</th><th>Filed</th></tr>
+    </thead>
+    <tbody>
+      {% for claim in claims %}
+      <tr onclick="window.location='{{ url_for('claims.claim_detail', claim_id=claim.id) }}'" style="cursor:pointer">
+        <td>#{{ claim.id }}</td>
+        <td>#{{ claim.policy_id }} &mdash; {{ claim.policy.policyholder.name }}</td>
+        <td>{{ claim.incident_type.replace('_',' ')|title }}</td>
+        <td>${{ "%.2f"|format(claim.claimed_amount) }}</td>
+        <td>{{ risk_meter(claim.risk_score, claim.risk_priority) }}</td>
+        <td class="priority-{{ claim.risk_priority }}">{{ claim.risk_priority|title }}</td>
+        <td>{{ claim.claim_date.strftime('%Y-%m-%d') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p class="helptext">Queue is empty &mdash; nothing pending review.</p>
+  {% endif %}
+</div>
+{% endblock %}

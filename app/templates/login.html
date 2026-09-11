@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Log in &mdash; Meridian Auto</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+{% from "_icons.html" import icon %}
+<body>
+  <div class="login-split">
+    <div class="login-split-brand">
+      <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:2rem;">
+        {{ icon('shield', 26) }}
+        <span style="font-weight:700;font-size:1.1rem;">Meridian Auto</span>
+      </div>
+      <h1>Claims Triage System</h1>
+      <p class="subtitle">Score every claim, auto-clear the clean ones, route everything else to a human adjuster. Nothing gets denied without a person deciding it.</p>
+      <div class="hero-stats">
+        <div><strong>6</strong><span>Explainable risk rules</span></div>
+        <div><strong>0</strong><span>Auto-denials, ever</span></div>
+        <div><strong>100%</strong><span>Auditable decisions</span></div>
+      </div>
+    </div>
+    <div class="login-split-form">
+      <div class="card">
+        <h2 style="margin-top:0">Log in</h2>
+        <p class="helptext" style="margin-bottom:1rem;">Demo auth &mdash; pick a seeded user, no password. A plain role field gates the adjuster queue; this isn't a production auth system.</p>
+        <form method="post">
+          <label for="user_id">User</label>
+          <select name="user_id" id="user_id" required>
+            <option value="" disabled selected>Choose a user&hellip;</option>
+            <optgroup label="Adjusters">
+              {% for user in users if user.role == 'adjuster' %}
+                <option value="{{ user.id }}">{{ user.display_name }}</option>
+              {% endfor %}
+            </optgroup>
+            <optgroup label="Policyholders">
+              {% for user in users if user.role != 'adjuster' %}
+                <option value="{{ user.id }}">{{ user.display_name }}{% if user.policyholder %} &mdash; Policy #{{ user.policyholder.policies[0].id if user.policyholder.policies else '—' }}{% endif %}</option>
+              {% endfor %}
+            </optgroup>
+          </select>
+          <button type="submit">Log in</button>
+        </form>
+      </div>
+      <p style="text-align:center;margin-top:1.25rem;">
+        <a href="{{ url_for('index') }}" style="color:var(--muted);font-size:0.85rem;text-decoration:none;">&larr; Back to home</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

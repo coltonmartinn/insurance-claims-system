@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_risk.html" import risk_meter %}
+{% block title %}Claims{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{{ 'All Claims' if current_user.role == 'adjuster' else 'Your Claims' }}</h1>
+    <p class="subtitle">{{ claims|length }} claim{{ '' if claims|length == 1 else 's' }}</p>
+  </div>
+  <a class="btn" href="{{ url_for('claims.new_claim') }}">File a Claim</a>
+</div>
+
+<div class="card">
+  {% if claims %}
+  <div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Policy</th><th>Type</th><th>Incident Date</th><th>Amount</th><th>Status</th>{% if current_user.role == 'adjuster' %}<th>Risk Score</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for claim in claims %}
+      <tr onclick="window.location='{{ url_for('claims.claim_detail', claim_id=claim.id) }}'" style="cursor:pointer">
+        <td>#{{ claim.id }}</td>
+        <td>#{{ claim.policy_id }}</td>
+        <td>{{ claim.incident_type.replace('_',' ')|title }}</td>
+        <td>{{ claim.incident_date }}</td>
+        <td>${{ "%.2f"|format(claim.claimed_amount) }}</td>
+        <td><span class="badge badge-{{ claim.status }}">{{ claim.status.replace('_',' ')|title }}</span></td>
+        {% if current_user.role == 'adjuster' %}
+        <td>{% if claim.risk_score is not none %}{{ risk_meter(claim.risk_score, claim.risk_priority or 'normal') }}{% else %}&mdash;{% endif %}</td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p class="helptext">No claims yet.</p>
+  {% endif %}
+</div>
+{% endblock %}
