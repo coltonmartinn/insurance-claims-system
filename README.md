@@ -126,6 +126,23 @@ intentionally simple — a real actuarial rating plan has dozens of variables
 and is filed with state regulators — but every dollar of the quoted premium
 traces back to one named factor, shown on the quote result page.
 
+## Underwriting risk (quote time)
+
+`app/underwriting.py` runs the same explainable-rules pattern as claims
+triage, but at the opposite end of the policy lifecycle: instead of asking
+"does this claim look suspicious," it asks "how much risk is the company
+taking on by issuing this policy at all." Six independent rules over driver
+age, vehicle age (both new-vehicle payout exposure and old-vehicle
+reliability), prior claims, territory loss history, and coverage limit sum
+into a score banded **Safe / Moderate / Risky**, shown on the quote result
+page right below the premium breakdown.
+
+Like claims triage, this is advisory only — it never blocks a quote or
+changes the premium. It surfaces a second, complementary risk lens (pricing
+risk vs. underwriting exposure) for a human underwriter, using the same
+score-ring/rule-list UI components the adjuster view uses for claims, so
+both risk signals in the app read the same way.
+
 ## JSON API
 
 `app/routes/api.py` exposes the same triage logic over HTTP for system-to-
@@ -221,6 +238,7 @@ data persists across restarts in a named volume (`instance_data`).
 app/
   models.py            Data model + claim status lifecycle
   rating.py             Premium calculation for the quote flow
+  underwriting.py        Explainable underwriting risk estimate at quote time (Safe/Moderate/Risky)
   triage.py             Rules-based risk scoring (the centerpiece)
   features.py           Feature extraction shared by triage.py and ml.py
   ml.py                 Optional logistic regression secondary signal
@@ -229,7 +247,7 @@ app/
   routes/               Flask blueprints: quotes, claims, adjuster, auth, dashboard, api
   templates/, static/   Server-rendered views
 tests/
-  test_triage.py, test_rating.py         Unit tests, no DB
+  test_triage.py, test_rating.py, test_underwriting.py   Unit tests, no DB
   test_claims_flow.py, test_adjuster_flow.py, test_quotes.py, test_api.py
                                           Integration tests via the Flask test client
 tools/

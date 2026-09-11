@@ -5,6 +5,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.extensions import db
 from app.models import Policyholder, Policy
 from app.rating import calculate_premium
+from app.underwriting import assess_underwriting_risk
 
 bp = Blueprint("quotes", __name__, url_prefix="/quote")
 
@@ -19,19 +20,10 @@ def new_quote():
         form = request.form
         dob = _parse_date(form["date_of_birth"])
         start_date = _parse_date(form["start_date"]) if form.get("start_date") else date.today()
-        driver_age = date.today().year - dob.year - ((date.today().month, date.today().day) < (dob.month, dob.day))
         vehicle_year = int(form["vehicle_year"])
         prior_claims_count = int(form["prior_claims_count"])
         territory = form["territory"].strip()
         coverage_limit = float(form["coverage_limit"])
-
-        premium, breakdown = calculate_premium(
-            driver_age=driver_age,
-            vehicle_year=vehicle_year,
-            prior_claims_count=prior_claims_count,
-            territory=territory,
-            coverage_limit=coverage_limit,
-        )
 
         policyholder = Policyholder(
             name=form["name"].strip(),
@@ -43,6 +35,14 @@ def new_quote():
         )
         db.session.add(policyholder)
         db.session.flush()  # get policyholder.id before creating the policy
+
+        premium, _ = calculate_premium(
+            driver_age=policyholder.age,
+            vehicle_year=vehicle_year,
+            prior_claims_count=prior_claims_count,
+            territory=territory,
+            coverage_limit=coverage_limit,
+        )
 
         policy = Policy(
             policyholder_id=policyholder.id,
@@ -66,13 +66,21 @@ def new_quote():
 @bp.route("/<int:policy_id>")
 def quote_result(policy_id):
     policy = Policy.query.get_or_404(policy_id)
-    dob = policy.policyholder.date_of_birth
-    driver_age = date.today().year - dob.year - ((date.today().month, date.today().day) < (dob.month, dob.day))
+    driver_age = policy.policyholder.age
+    territory = policy.policyholder.territory
+
     _, breakdown = calculate_premium(
         driver_age=driver_age,
         vehicle_year=policy.vehicle_year,
         prior_claims_count=policy.prior_claims_count,
-        territory=policy.policyholder.territory,
+        territory=territory,
         coverage_limit=policy.coverage_limit,
     )
-    return render_template("quote_result.html", policy=policy, breakdown=breakdown)
+    underwriting = assess_underwriting_risk(
+        driver_age=driver_age,
+        vehicle_year=policy.vehicle_year,
+        prior_claims_count=policy.prior_claims_count,
+        territory=territory,
+        coverage_limit=policy.coverage_limit,
+    )
+    return render_template("quote_result.html", policy=policy, breakdown=breakdown, underwriting=underwriting)

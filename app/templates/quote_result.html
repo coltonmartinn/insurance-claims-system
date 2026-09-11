@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_risk.html" import score_ring %}
 {% block title %}Quote #{{ policy.id }}{% endblock %}
 {% block content %}
 <h1>Policy Created</h1>
@@ -34,6 +35,32 @@
       <tr><td colspan="2"><strong>Final annual premium</strong></td><td><strong>${{ "%.2f"|format(policy.premium) }}</strong></td></tr>
     </tbody>
   </table>
+</div>
+
+<div class="card">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <h2 style="margin-top:0">Underwriting Risk</h2>
+      <p class="helptext" style="max-width:520px;">
+        A separate, advisory estimate of how much risk the company takes on by issuing this policy at all &mdash;
+        driver experience, vehicle exposure, prior loss history, territory, and payout size. Like claims triage,
+        this never blocks a quote by itself; it's a signal for an underwriter to weigh.
+      </p>
+    </div>
+    {{ score_ring(underwriting.score, underwriting.priority) }}
+  </div>
+  <p style="margin:0.75rem 0 0.5rem;">
+    <span class="badge badge-{{ 'auto_cleared' if underwriting.band == 'safe' else ('pending_review' if underwriting.band == 'moderate' else 'denied') }}">{{ underwriting.band|title }}</span>
+  </p>
+  {% if underwriting.fired_rules %}
+  <ul class="rule-list">
+    {% for rule in underwriting.fired_rules %}
+      <li><span class="rule-points">+{{ rule.points }}</span><span>{{ rule.reason }}</span></li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="helptext">No underwriting risk factors flagged &mdash; this policy is within baseline risk on every factor checked.</p>
+  {% endif %}
 </div>
 
 <a class="btn" href="{{ url_for('quotes.new_quote') }}">New Quote</a>
