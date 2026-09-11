@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, g, render_template
+from flask import Flask, g, render_template, request
 
 from app.extensions import db
 from app.auth import load_logged_in_user
@@ -44,6 +44,18 @@ def create_app(test_config=None):
     @app.before_request
     def _load_user():
         load_logged_in_user()
+
+    @app.after_request
+    def _no_cache_for_dynamic_pages(response):
+        # Every page here reflects who is logged in. Without this, a
+        # browser can serve a cached copy of /claims/ (or the static file
+        # cache, or the back/forward cache) from a *previous* login after
+        # switching accounts in the same browser -- showing one user's data
+        # under another user's session without ever hitting the server.
+        if not request.path.startswith("/static/"):
+            response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+            response.headers["Pragma"] = "no-cache"
+        return response
 
     @app.context_processor
     def _inject_user():

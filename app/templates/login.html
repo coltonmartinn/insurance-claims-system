@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Log in &mdash; Meridian Auto</title>
+  <title>Log in: Meridian Auto</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -28,7 +28,7 @@
     <div class="login-split-form">
       <div class="card">
         <h2 style="margin-top:0">Log in</h2>
-        <p class="helptext" style="margin-bottom:1rem;">Demo auth &mdash; pick a seeded user, no password. A plain role field gates the adjuster queue; this isn't a production auth system.</p>
+        <p class="helptext" style="margin-bottom:1rem;">Demo auth: pick a seeded user, no password. A plain role field gates the adjuster queue; this isn't a production auth system.</p>
         <form method="post">
           <label for="user_id">User</label>
           <select name="user_id" id="user_id" required>
@@ -40,7 +40,7 @@
             </optgroup>
             <optgroup label="Policyholders">
               {% for user in users if user.role != 'adjuster' %}
-                <option value="{{ user.id }}">{{ user.display_name }}{% if user.policyholder %} &mdash; Policy #{{ user.policyholder.policies[0].id if user.policyholder.policies else '—' }}{% endif %}</option>
+                <option value="{{ user.id }}">{{ user.display_name }}{% if user.policyholder and user.policyholder.policies %} (Policy #{{ user.policyholder.policies[0].id }}){% endif %}</option>
               {% endfor %}
             </optgroup>
           </select>

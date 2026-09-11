@@ -12,12 +12,30 @@ PRIORITY_ORDER = {"high": 2, "normal": 1, "low": 0}
 @bp.route("/queue")
 @adjuster_required
 def queue():
+    """Reviewer mode: every claim the system did NOT auto-clear, sorted by
+    risk score so the highest-priority claims surface first. This is where
+    an adjuster makes the actual approve/deny call."""
     claims = (
         Claim.query.filter_by(status="pending_review")
         .order_by(Claim.risk_score.desc())
         .all()
     )
     return render_template("adjuster_queue.html", claims=claims)
+
+
+@bp.route("/auto-cleared")
+@adjuster_required
+def auto_cleared():
+    """Claims the system cleared on its own, with no human ever having
+    made a decision on them. Read-only: this exists so an adjuster can
+    audit what auto-clear has been doing, not to re-open individual
+    claims from here (open the claim itself for that)."""
+    claims = (
+        Claim.query.filter_by(status="auto_cleared")
+        .order_by(Claim.claim_date.desc())
+        .all()
+    )
+    return render_template("adjuster_auto_cleared.html", claims=claims)
 
 
 @bp.route("/claims/<int:claim_id>/transition", methods=["POST"])

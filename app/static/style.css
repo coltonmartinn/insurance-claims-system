@@ -88,6 +88,15 @@ body {
   transition: background 0.15s ease, color 0.15s ease;
 }
 .sidebar-nav a .icon { opacity: 0.85; }
+.sidebar-nav-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #5f7897;
+  padding: 0.9rem 0.75rem 0.3rem;
+}
+.sidebar-nav-label:first-child { padding-top: 0; }
 .sidebar-nav a:hover { background: rgba(255, 255, 255, 0.07); color: white; }
 .sidebar-nav a.active { background: rgba(74, 143, 201, 0.22); color: white; box-shadow: inset 3px 0 0 var(--accent-light); }
 
@@ -501,6 +510,7 @@ code { background: #eef1f5; padding: 0.1rem 0.4rem; border-radius: 4px; font-siz
   .sidebar-nav { flex-direction: row; margin-top: 0; overflow-x: auto; flex: 1; }
   .sidebar-nav a span { display: none; }
   .sidebar-nav a.active { box-shadow: inset 0 -3px 0 var(--accent-light); }
+  .sidebar-nav-label { display: none; }
   .sidebar-user { border-top: none; margin-top: 0; padding-top: 0; }
   .sidebar-user-name, .sidebar-user-role { display: none; }
   .container { padding: 1.25rem 1rem 2.5rem; }

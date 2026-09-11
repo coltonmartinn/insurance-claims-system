@@ -19,6 +19,13 @@ bp = Blueprint("claims", __name__, url_prefix="/claims")
 ALLOWED_PHOTO_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "pdf"}
 
 
+def _owned_policy_ids():
+    """Policy ids the current non-adjuster user is allowed to see/act on.
+    Centralized so every ownership check (list, detail, upload, filing)
+    uses exactly the same rule."""
+    return [p.id for p in g.user.policyholder.policies] if g.user.policyholder else []
+
+
 def _save_photo(file_storage):
     if not file_storage or file_storage.filename == "":
         return None
@@ -37,7 +44,7 @@ def list_claims():
     if g.user.role == "adjuster":
         claims = Claim.query.order_by(Claim.claim_date.desc()).all()
     else:
-        policy_ids = [p.id for p in g.user.policyholder.policies] if g.user.policyholder else []
+        policy_ids = _owned_policy_ids()
         claims = (
             Claim.query.filter(Claim.policy_id.in_(policy_ids))
             .order_by(Claim.claim_date.desc())
@@ -50,10 +57,13 @@ def list_claims():
 @bp.route("/new", methods=["GET", "POST"])
 @login_required
 def new_claim():
-    if g.user.role == "adjuster" or not g.user.policyholder:
+    if g.user.role == "adjuster":
         policies = Policy.query.all()
     else:
-        policies = g.user.policyholder.policies
+        # Never fall back to "every policy in the system" here -- a
+        # customer with no linked policyholder has no policies to claim
+        # against, full stop.
+        policies = g.user.policyholder.policies if g.user.policyholder else []
 
     if request.method == "POST":
         form = request.form
@@ -69,6 +79,12 @@ def new_claim():
             ), 400
 
         policy = Policy.query.get_or_404(policy_id)
+        if g.user.role != "adjuster" and policy.id not in _owned_policy_ids():
+            # A customer can only ever file against their own policy --
+            # without this, POSTing another policyholder's policy_id would
+            # silently attach a claim (and its audit trail) to their account.
+            abort(403)
+
         claim = file_claim(
             policy=policy,
             incident_type=form["incident_type"],
@@ -91,10 +107,8 @@ def new_claim():
 @login_required
 def claim_detail(claim_id):
     claim = Claim.query.get_or_404(claim_id)
-    if g.user.role != "adjuster":
-        owned_policy_ids = [p.id for p in g.user.policyholder.policies] if g.user.policyholder else []
-        if claim.policy_id not in owned_policy_ids:
-            abort(403)
+    if g.user.role != "adjuster" and claim.policy_id not in _owned_policy_ids():
+        abort(403)
 
     fired_rules = json.loads(claim.risk_explanation) if claim.risk_explanation else []
     return render_template("claim_detail.html", claim=claim, fired_rules=fired_rules)
@@ -103,4 +117,7 @@ def claim_detail(claim_id):
 @bp.route("/uploads/<path:filename>")
 @login_required
 def uploaded_file(filename):
+    claim = Claim.query.filter_by(photo_filename=filename).first_or_404()
+    if g.user.role != "adjuster" and claim.policy_id not in _owned_policy_ids():
+        abort(403)
     return send_from_directory(current_app.config["UPLOAD_FOLDER"], filename)

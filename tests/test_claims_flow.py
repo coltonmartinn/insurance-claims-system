@@ -168,3 +168,79 @@ def test_customer_cannot_view_another_customers_claim(client, db_session):
     _login(client, user_b.id)
     resp = client.get(f"/claims/{claim.id}")
     assert resp.status_code == 403
+
+
+def test_customer_cannot_file_a_claim_against_another_customers_policy(client, db_session):
+    ph_a = make_policyholder(email="filer@example.com")
+    make_policy(ph_a, start_date=date.today() - timedelta(days=400))
+    user_a = make_user(username="filer", policyholder=ph_a)
+
+    ph_b = make_policyholder(email="victim@example.com")
+    policy_b = make_policy(ph_b, start_date=date.today() - timedelta(days=400))
+    make_user(username="victim", policyholder=ph_b)
+    db_session.commit()
+
+    _login(client, user_a.id)
+    resp = client.post("/claims/new", data={
+        # Deliberately submitting someone else's policy id, as if the
+        # <select> value had been tampered with.
+        "policy_id": str(policy_b.id),
+        "incident_type": "collision",
+        "incident_date": (date.today() - timedelta(days=2)).isoformat(),
+        "claimed_amount": "500.00",
+        "description": "Rear-ended at a stop light.",
+    })
+
+    assert resp.status_code == 403
+    assert Claim.query.filter_by(policy_id=policy_b.id).count() == 0
+
+
+def test_customer_with_no_policyholder_sees_no_policies_to_file_against(client, db_session):
+    orphan_user = make_user(username="orphan", role="customer", policyholder=None)
+    make_policyholder()  # some other customer's policy exists in the system
+    db_session.commit()
+
+    _login(client, orphan_user.id)
+    resp = client.get("/claims/new")
+    assert resp.status_code == 200
+    assert b'<option value="1"' not in resp.data
+
+
+def test_customer_cannot_fetch_another_customers_uploaded_photo(client, db_session):
+    ph_a = make_policyholder(email="owner@example.com")
+    policy_a = make_policy(ph_a, start_date=date.today() - timedelta(days=400))
+    user_a = make_user(username="photoowner", policyholder=ph_a)
+
+    ph_b = make_policyholder(email="snoop@example.com")
+    make_policy(ph_b, start_date=date.today() - timedelta(days=400))
+    user_b = make_user(username="snoop", policyholder=ph_b)
+    db_session.commit()
+
+    claim = Claim(
+        policy_id=policy_a.id, incident_type="collision", incident_date=date.today(),
+        claimed_amount=500.0, description="test", photo_filename="fake_photo.jpg",
+        status="pending_review",
+    )
+    db_session.add(claim)
+    db_session.commit()
+
+    _login(client, user_b.id)
+    resp = client.get("/claims/uploads/fake_photo.jpg")
+    assert resp.status_code == 403
+
+    client.get("/logout")
+    _login(client, user_a.id)
+    resp = client.get("/claims/uploads/fake_photo.jpg")
+    # Ownership check passes; 404 here just means the physical file wasn't
+    # actually written to disk in this test, not an authorization failure.
+    assert resp.status_code == 404
+
+
+def test_dynamic_pages_are_not_cached_by_the_browser(client, db_session):
+    ph = make_policyholder()
+    user = make_user(username="cacheuser", policyholder=ph)
+    db_session.commit()
+
+    _login(client, user.id)
+    resp = client.get("/claims/")
+    assert "no-store" in resp.headers["Cache-Control"]

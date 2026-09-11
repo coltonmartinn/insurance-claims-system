@@ -18,9 +18,12 @@
 
       <nav class="sidebar-nav">
         {% if current_user.role == 'adjuster' %}
-          <a href="{{ url_for('adjuster.queue') }}" class="{{ 'active' if request.endpoint == 'adjuster.queue' }}">{{ icon('queue') }}<span>Review Queue</span></a>
-          <a href="{{ url_for('dashboard.dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard.dashboard' }}">{{ icon('dashboard') }}<span>Dashboard</span></a>
+          <div class="sidebar-nav-label">Reviewer Mode</div>
+          <a href="{{ url_for('adjuster.queue') }}" class="{{ 'active' if request.endpoint == 'adjuster.queue' }}">{{ icon('queue') }}<span>Needs Review</span></a>
+          <a href="{{ url_for('adjuster.auto_cleared') }}" class="{{ 'active' if request.endpoint == 'adjuster.auto_cleared' }}">{{ icon('flag') }}<span>Auto-Cleared</span></a>
           <a href="{{ url_for('claims.list_claims') }}" class="{{ 'active' if request.endpoint == 'claims.list_claims' }}">{{ icon('claims') }}<span>All Claims</span></a>
+          <a href="{{ url_for('dashboard.dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard.dashboard' }}">{{ icon('dashboard') }}<span>Dashboard</span></a>
+          <div class="sidebar-nav-label">Other</div>
         {% else %}
           <a href="{{ url_for('claims.list_claims') }}" class="{{ 'active' if request.endpoint == 'claims.list_claims' }}">{{ icon('claims') }}<span>My Claims</span></a>
           <a href="{{ url_for('claims.new_claim') }}" class="{{ 'active' if request.endpoint == 'claims.new_claim' }}">{{ icon('new-claim') }}<span>File a Claim</span></a>
@@ -43,7 +46,7 @@
     <div class="main-area">
 {% else %}
   <header class="topbar-public">
-    <a class="brand" href="{{ url_for('index') }}">{{ icon('shield', 20) }}<span>Meridian Auto &mdash; Claims Triage</span></a>
+    <a class="brand" href="{{ url_for('index') }}">{{ icon('shield', 20) }}<span>Meridian Auto: Claims Triage</span></a>
     <nav>
       <a href="{{ url_for('quotes.new_quote') }}">New Quote</a>
       <a class="btn-nav" href="{{ url_for('auth.login') }}">Log in</a>

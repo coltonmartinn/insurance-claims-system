@@ -29,7 +29,7 @@
         <td>${{ "%.2f"|format(claim.claimed_amount) }}</td>
         <td><span class="badge badge-{{ claim.status }}">{{ claim.status.replace('_',' ')|title }}</span></td>
         {% if current_user.role == 'adjuster' %}
-        <td>{% if claim.risk_score is not none %}{{ risk_meter(claim.risk_score, claim.risk_priority or 'normal') }}{% else %}&mdash;{% endif %}</td>
+        <td>{% if claim.risk_score is not none %}{{ risk_meter(claim.risk_score, claim.risk_priority or 'normal') }}{% else %}N/A{% endif %}</td>
         {% endif %}
       </tr>
       {% endfor %}

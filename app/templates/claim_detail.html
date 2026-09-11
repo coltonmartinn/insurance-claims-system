@@ -5,7 +5,7 @@
 <div class="claim-header">
   <div>
     <div class="claim-header-id">Claim #{{ claim.id }}</div>
-    <h1 style="margin-bottom:0.4rem">{{ claim.incident_type.replace('_',' ')|title }} &mdash; ${{ "%.2f"|format(claim.claimed_amount) }}</h1>
+    <h1 style="margin-bottom:0.4rem">{{ claim.incident_type.replace('_',' ')|title }}: ${{ "%.2f"|format(claim.claimed_amount) }}</h1>
     <span class="badge badge-{{ claim.status }}">{{ claim.status.replace('_',' ')|title }}</span>
   </div>
   {% if current_user.role == 'adjuster' and claim.risk_score is not none %}
@@ -13,7 +13,7 @@
   {% endif %}
 </div>
 
-<p class="subtitle" style="margin-top:-0.75rem;margin-bottom:1.25rem;">Policy #{{ claim.policy_id }} &mdash; {{ claim.policy.policyholder.name }} &mdash; {{ claim.policy.vehicle_year }} {{ claim.policy.vehicle_make }} {{ claim.policy.vehicle_model }}</p>
+<p class="subtitle" style="margin-top:-0.75rem;margin-bottom:1.25rem;">Policy #{{ claim.policy_id }} ({{ claim.policy.policyholder.name }}), {{ claim.policy.vehicle_year }} {{ claim.policy.vehicle_make }} {{ claim.policy.vehicle_model }}</p>
 
 <div class="grid-2">
   <div class="card">

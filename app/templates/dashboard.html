@@ -27,7 +27,7 @@
   </div>
   <div class="chart-legend">
     {% for seg in status_breakdown %}
-    <div class="chart-legend-item"><span class="chart-legend-dot" style="background: var({{ seg.color_var }});"></span>{{ seg.status.replace('_',' ')|title }} &mdash; {{ seg.count }} ({{ seg.pct }}%)</div>
+    <div class="chart-legend-item"><span class="chart-legend-dot" style="background: var({{ seg.color_var }});"></span>{{ seg.status.replace('_',' ')|title }}: {{ seg.count }} ({{ seg.pct }}%)</div>
     {% endfor %}
   </div>
   {% else %}
@@ -60,7 +60,7 @@
 <h2>Secondary Model Performance</h2>
 <div class="card">
   {% if model_metrics %}
-  <p class="helptext">Logistic regression evaluated on a held-out 25% test split of synthetic data ({{ model_metrics.n_test }} claims, {{ "%.0f%%"|format(model_metrics.test_label_prevalence * 100) }} labeled fraudulent). Reported alongside accuracy because the label is imbalanced &mdash; accuracy alone would be misleading.</p>
+  <p class="helptext">Logistic regression evaluated on a held-out 25% test split of synthetic data ({{ model_metrics.n_test }} claims, {{ "%.0f%%"|format(model_metrics.test_label_prevalence * 100) }} labeled fraudulent). Reported alongside accuracy because the label is imbalanced; accuracy alone would be misleading.</p>
   <div class="stat-row" style="margin-top:0.75rem;">
     <div class="stat"><div class="value">{{ "%.2f"|format(model_metrics.roc_auc) }}</div><div class="label">ROC-AUC</div></div>
     <div class="stat"><div class="value">{{ "%.0f%%"|format(model_metrics.precision * 100) }}</div><div class="label">Precision</div></div>

@@ -107,6 +107,47 @@ def test_mark_paid_requires_approved_status_first(client, db_session):
     assert db_session.get(Claim, claim.id).status == "paid"
 
 
+def test_auto_cleared_page_lists_only_auto_cleared_claims(client, db_session):
+    ph = make_policyholder(email="cleancust@example.com")
+    policy = make_policy(ph, coverage_limit=50000, start_date=date.today() - timedelta(days=400))
+    customer = make_user(username="cleancust", policyholder=ph)
+    db_session.commit()
+
+    _login(client, customer.id)
+    client.post("/claims/new", data={
+        "policy_id": str(policy.id),
+        "incident_type": "collision",
+        "incident_date": (date.today() - timedelta(days=2)).isoformat(),
+        "claimed_amount": "800.00",
+        "description": "Rear-ended at a stop light, minor bumper damage.",
+    })
+    client.get("/logout")
+    clean_claim = Claim.query.filter_by(policy_id=policy.id).one()
+    assert clean_claim.status == "auto_cleared"
+
+    flagged_claim = _file_flagged_claim(client, db_session, username="dirtycust")
+
+    adjuster = make_user(username="adj_audit", role="adjuster")
+    db_session.commit()
+
+    _login(client, adjuster.id)
+    resp = client.get("/adjuster/auto-cleared")
+    assert resp.status_code == 200
+    assert f"#{clean_claim.id}".encode() in resp.data
+    assert f"#{flagged_claim.id}".encode() not in resp.data
+
+
+def test_customer_cannot_access_auto_cleared_page(client, db_session):
+    ph = make_policyholder()
+    make_policy(ph)
+    customer = make_user(username="noaccess", policyholder=ph)
+    db_session.commit()
+
+    _login(client, customer.id)
+    resp = client.get("/adjuster/auto-cleared")
+    assert resp.status_code == 403
+
+
 def test_lower_priority_does_not_change_status(client, db_session):
     claim = _file_flagged_claim(client, db_session, username="lowerprio")
     adjuster = make_user(username="adj5", role="adjuster")

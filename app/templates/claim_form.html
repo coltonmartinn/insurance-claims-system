@@ -10,7 +10,7 @@
     <select name="policy_id" id="policy_id" required>
       <option value="" disabled {{ "" if form else "selected" }}>Select a policy&hellip;</option>
       {% for policy in policies %}
-        <option value="{{ policy.id }}" {{ "selected" if form and form.get('policy_id') == policy.id|string }}>#{{ policy.id }} &mdash; {{ policy.policyholder.name }} &mdash; {{ policy.vehicle_year }} {{ policy.vehicle_make }} {{ policy.vehicle_model }} (limit ${{ "%.0f"|format(policy.coverage_limit) }})</option>
+        <option value="{{ policy.id }}" {{ "selected" if form and form.get('policy_id') == policy.id|string }}>#{{ policy.id }} ({{ policy.policyholder.name }}), {{ policy.vehicle_year }} {{ policy.vehicle_make }} {{ policy.vehicle_model }} (limit ${{ "%.0f"|format(policy.coverage_limit) }})</option>
       {% endfor %}
     </select>
 

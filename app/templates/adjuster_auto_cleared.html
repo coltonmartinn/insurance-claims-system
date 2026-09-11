@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% from "_risk.html" import risk_meter %}
-{% block title %}Review Queue{% endblock %}
+{% block title %}Auto-Cleared Claims{% endblock %}
 {% block content %}
 <div class="page-header">
   <div>
-    <h1>Adjuster Review Queue</h1>
-    <p class="subtitle">Every claim below needs a human decision. Sorted by risk score, highest first.</p>
+    <h1>Auto-Cleared Claims</h1>
+    <p class="subtitle">Claims the system cleared on its own, without an adjuster ever making a decision. Shown here for oversight only, sorted by most recent first.</p>
   </div>
 </div>
 
@@ -14,7 +14,7 @@
   <div class="table-wrap">
   <table>
     <thead>
-      <tr><th>ID</th><th>Policy</th><th>Type</th><th>Amount</th><th>Risk Score</th><th>Priority</th><th>Filed</th></tr>
+      <tr><th>ID</th><th>Policy</th><th>Type</th><th>Amount</th><th>Risk Score</th><th>Filed</th></tr>
     </thead>
     <tbody>
       {% for claim in claims %}
@@ -23,8 +23,7 @@
         <td>#{{ claim.policy_id }} ({{ claim.policy.policyholder.name }})</td>
         <td>{{ claim.incident_type.replace('_',' ')|title }}</td>
         <td>${{ "%.2f"|format(claim.claimed_amount) }}</td>
-        <td>{{ risk_meter(claim.risk_score, claim.risk_priority) }}</td>
-        <td class="priority-{{ claim.risk_priority }}">{{ claim.risk_priority|title }}</td>
+        <td>{{ risk_meter(claim.risk_score, claim.risk_priority or 'low') }}</td>
         <td>{{ claim.claim_date.strftime('%Y-%m-%d') }}</td>
       </tr>
       {% endfor %}
@@ -32,7 +31,7 @@
   </table>
   </div>
   {% else %}
-  <p class="helptext">Queue is empty: nothing pending review.</p>
+  <p class="helptext">No claims have been auto-cleared yet.</p>
   {% endif %}
 </div>
 {% endblock %}
