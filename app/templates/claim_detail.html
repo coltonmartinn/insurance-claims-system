@@ -82,7 +82,7 @@
   <h2 style="margin-top:0">Audit Trail</h2>
   <div class="audit-trail">
     {% for event in claim.status_events %}
-    <div class="event">
+    <div class="event event-{{ event.new_status }}">
       <div><strong>{{ event.old_status or 'created' }} &rarr; {{ event.new_status }}</strong></div>
       <div class="event-meta">{{ event.timestamp.strftime('%Y-%m-%d %H:%M') }} by {{ event.changed_by }}</div>
       {% if event.reason %}<div style="font-size:0.9rem;margin-top:0.15rem;">{{ event.reason }}</div>{% endif %}
