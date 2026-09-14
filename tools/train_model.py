@@ -23,7 +23,6 @@ import json
 import os
 import sys
 
-import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
@@ -34,47 +33,9 @@ import joblib
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app.features import FEATURE_NAMES  # noqa: E402
+from app.synthetic_data import generate_synthetic_dataset  # noqa: E402
 
-RNG = np.random.default_rng(42)
-N_SAMPLES = 4000
 APP_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "app")
-
-
-def generate_synthetic_dataset(n=N_SAMPLES):
-    amount_to_limit_ratio = RNG.beta(2, 5, n)  # skewed low, occasional high
-    policy_incident_gap_days = RNG.exponential(200, n).clip(0, 3650)
-    prior_claims_count = RNG.poisson(0.6, n).clip(0, 8)
-    is_round_number = RNG.binomial(1, 0.15, n).astype(float)
-    type_mismatch = RNG.binomial(1, 0.08, n).astype(float)
-    reporting_delay_days = RNG.exponential(10, n).clip(0, 200)
-
-    X = np.column_stack([
-        amount_to_limit_ratio,
-        policy_incident_gap_days,
-        prior_claims_count,
-        is_round_number,
-        type_mismatch,
-        reporting_delay_days,
-    ])
-
-    # Synthetic "ground truth" risk, echoing the same intuitions as the
-    # rules engine: high amount ratio, very short policy/incident gaps,
-    # prior claims, round numbers, type mismatches, and late reporting all
-    # push risk up. Weights and noise are hand-picked, not fit from data.
-    logit = (
-        3.0 * amount_to_limit_ratio
-        - 0.010 * policy_incident_gap_days  # gap shrinks risk as it grows
-        + 0.35 * prior_claims_count
-        + 0.8 * is_round_number
-        + 1.4 * type_mismatch
-        + 0.015 * reporting_delay_days
-        - 2.5  # intercept so baseline risk is low
-    )
-    noise = RNG.normal(0, 1.0, n)
-    probability = 1 / (1 + np.exp(-(logit + noise)))
-    labels = RNG.binomial(1, probability)
-
-    return X, labels
 
 
 def main():

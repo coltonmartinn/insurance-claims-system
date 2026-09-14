@@ -95,6 +95,23 @@ passes through automatically. A model this permissive on recall would need
 threshold tuning (or a recall-oriented metric target) before it could drive
 any decision on its own.
 
+### Model exploration notebook
+
+`notebooks/model_exploration.ipynb` is the exploratory counterpart to the
+training script above: EDA on the synthetic feature distributions, a
+confusion matrix and ROC curve, a full precision/recall/F1 sweep across
+decision thresholds (this is where the recall finding above gets dug
+into: F1 roughly triples by moving off the default 0.5 threshold), a
+coefficient/feature-importance chart, and a direct comparison between the
+rules engine's score and the model's predicted probability on the same
+rows, to see where the two independent signals agree and where they
+diverge. It's committed with its outputs already run, so it renders fully
+on GitHub with no notebook server needed to view it.
+
+To regenerate it: `pip install -r requirements-notebook.txt`, then open it
+in Jupyter, or re-run headlessly with
+`jupyter nbconvert --to notebook --execute --inplace notebooks/model_exploration.ipynb`.
+
 ## Audit trail
 
 Every status change, automatic or human, writes a `ClaimStatusEvent`: old
@@ -282,6 +299,23 @@ Builds the image, trains the model, seeds the database, and serves the app
 at `http://127.0.0.1:5000`, no local Python environment needed. Seeded
 data persists across restarts in a named volume (`instance_data`).
 
+In this image, gunicorn serves the app (see `wsgi.py`), not the Flask dev
+server `run.py` uses locally. The dev server's interactive debugger is a
+remote-code-execution risk if it's ever reachable from outside localhost,
+so it never runs in the container.
+
+## Deploying it
+
+`render.yaml` is a [Render](https://render.com) Blueprint: on Render,
+"New" -> "Blueprint" -> connect this repo, and it deploys itself from the
+existing `Dockerfile`, generating real `SECRET_KEY` and `CLAIMS_API_KEY`
+values (never committed to the repo). No other setup needed.
+
+Free-tier note: the container's filesystem resets on redeploy or waking
+from an idle sleep, so the seeded demo data resets with it. That's
+deliberate for a public demo: it means a visitor can't leave it in a
+broken state.
+
 ## Stack
 
 - **Flask**: server-rendered templates, no frontend framework
@@ -305,20 +339,27 @@ app/
   validation.py          Numeric/date validators shared by the web forms and the API
   triage.py             Rules-based risk scoring (the centerpiece)
   features.py           Feature extraction shared by triage.py and ml.py
+  synthetic_data.py      Synthetic dataset generator shared by training script and notebook
   ml.py                 Optional logistic regression secondary signal
+  narrative.py           Translates the audit trail into plain language for customers
   claim_service.py      Shared intake+triage+audit logic used by the web form and the API
   auth.py               Minimal role-gated pseudo-auth
   routes/               Flask blueprints: quotes, claims, adjuster, auth, dashboard, api
   templates/, static/   Server-rendered views
 tests/
-  test_triage.py, test_rating.py, test_underwriting.py, test_validation.py   Unit tests, no DB
+  test_triage.py, test_rating.py, test_underwriting.py, test_validation.py,
+  test_synthetic_data.py, test_narrative.py                Unit tests, no DB
   test_claims_flow.py, test_adjuster_flow.py, test_quotes.py, test_api.py
                                           Integration tests via the Flask test client
 tools/
   train_model.py         Trains app/model.pkl on synthetic data + writes model_metrics.json
+notebooks/
+  model_exploration.ipynb   EDA, threshold tuning, and a rules-vs-ML comparison
 seed.py                   Populates the database with sample policies/claims
-run.py                    Dev server entry point
+run.py                    Dev server entry point (Flask dev server, local only)
+wsgi.py                   Production entry point (gunicorn points here)
 Dockerfile, docker-compose.yml   One-command containerized run
+render.yaml                      Render Blueprint for one-click deployment
 .github/workflows/ci.yml         Runs the test suite on every push/PR
 ```
 

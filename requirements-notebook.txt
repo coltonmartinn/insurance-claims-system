@@ -1,0 +1,7 @@
+-r requirements.txt
+jupyter
+nbformat
+nbconvert
+matplotlib
+seaborn
+pandas

@@ -6,3 +6,4 @@ instance/
 app/uploads/*
 !app/uploads/.gitkeep
 app/model.pkl
+.ipynb_checkpoints/

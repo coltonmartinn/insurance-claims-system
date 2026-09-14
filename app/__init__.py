@@ -12,7 +12,7 @@ UPLOAD_FOLDER = os.path.join(BASE_DIR, "app", "uploads")
 def create_app(test_config=None):
     app = Flask(__name__)
     app.config.from_mapping(
-        SECRET_KEY="dev-secret-key-not-for-production",
+        SECRET_KEY=os.environ.get("SECRET_KEY", "dev-secret-key-not-for-production"),
         SQLALCHEMY_DATABASE_URI=f"sqlite:///{os.path.join(BASE_DIR, 'instance', 'claims.db')}",
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         UPLOAD_FOLDER=UPLOAD_FOLDER,
@@ -64,6 +64,13 @@ def create_app(test_config=None):
     @app.route("/")
     def index():
         return render_template("index.html")
+
+    @app.route("/healthz")
+    def healthz():
+        # Used by the hosting platform's health check to know the process
+        # is alive and can talk to its database, not just that it started.
+        db.session.execute(db.text("SELECT 1"))
+        return {"status": "ok"}, 200
 
     with app.app_context():
         db.create_all()
