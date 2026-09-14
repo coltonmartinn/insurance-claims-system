@@ -6,6 +6,27 @@ A small auto insurance claims system built around one design decision: **the
 software never decides to pay or deny a claim.** It decides who looks at it,
 and how urgently.
 
+## Screens
+
+The adjuster's review queue, sorted by risk score, worst first:
+
+![Review queue](docs/screenshots/queue.png)
+
+A claim open for review: evidence on the left, every risk rule (fired and
+not) on the right, nothing hidden:
+
+![Claim detail, adjuster view](docs/screenshots/claim-detail-adjuster.png)
+
+The same data, translated for the person who filed the claim. No score, no
+rule name, no internal note ever reaches this page:
+
+![Claim detail, policyholder view](docs/screenshots/claim-portal.png)
+
+An operations dashboard, including honest reporting on the secondary model's
+weak point (low recall at the default threshold) instead of hiding it:
+
+![Dashboard](docs/screenshots/dashboard.png)
+
 ## Why triage, not auto-decisioning
 
 It would be easy to build a model that outputs "approve" or "deny" and call
