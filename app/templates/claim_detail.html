@@ -1,112 +1,138 @@
 {% extends "base.html" %}
-{% from "_risk.html" import score_ring %}
 {% block title %}Claim #{{ claim.id }}{% endblock %}
 {% block content %}
 {% if current_user.role == 'adjuster' %}
-{# ---------------------------------------------------------------- adjuster: the professional workbench view. Dense, precise, no narrative softening -- an adjuster needs the exact record, not a summary. #}
-<div class="claim-header">
+{# ---------------------------------------------------------------- adjuster: the professional workbench view. Evidence on the left, risk rail on the right; dense and precise, no narrative softening. #}
+<div class="claim-breadcrumb">{{ 'Needs Review' if claim.status == 'pending_review' else claim.status.replace('_',' ')|title }} &middot; Claim #{{ claim.id }}</div>
+<div class="claim-header-top">
   <div>
-    <div class="claim-header-id">Claim #{{ claim.id }}</div>
-    <h1 style="margin-bottom:0.4rem">{{ claim.incident_type.replace('_',' ')|title }}: ${{ "%.2f"|format(claim.claimed_amount) }}</h1>
-    <span class="badge badge-{{ claim.status }}">{{ claim.status.replace('_',' ')|title }}</span>
+    <h2>{{ claim.incident_type.replace('_',' ')|title }} &middot; ${{ "{:,.0f}".format(claim.claimed_amount) }}</h2>
+    <div class="claim-identity">{{ claim.policy.policyholder.name }} &middot; Policy #{{ claim.policy_id }} &middot; {{ claim.policy.vehicle_year }} {{ claim.policy.vehicle_make }} {{ claim.policy.vehicle_model }} &middot; Territory {{ claim.policy.policyholder.territory }}</div>
+    <div class="claim-header-tags">
+      {% if claim.risk_priority == 'high' %}<span class="badge badge-pending_review">High Priority</span>{% endif %}
+      <span class="badge badge-{{ claim.status }}">{{ claim.status.replace('_',' ')|title }}</span>
+    </div>
   </div>
-  {% if claim.risk_score is not none %}
-    {{ score_ring(claim.risk_score, claim.risk_priority) }}
-  {% endif %}
 </div>
 
-<p class="subtitle" style="margin-top:-0.75rem;margin-bottom:1.25rem;">Policy #{{ claim.policy_id }} ({{ claim.policy.policyholder.name }}), {{ claim.policy.vehicle_year }} {{ claim.policy.vehicle_make }} {{ claim.policy.vehicle_model }}</p>
+<div class="claim-detail-grid">
+  <div>
+    <div class="k">Policyholder's Account</div>
+    <p class="pull-quote">&ldquo;{{ claim.description }}&rdquo;</p>
 
-<div class="grid-2">
-  <div class="card">
-    <h2 style="margin-top:0">Claim Details</h2>
-    <table class="kv-table">
-      <tr><th>Incident type</th><td>{{ claim.incident_type.replace('_',' ')|title }}</td></tr>
-      <tr><th>Incident date</th><td>{{ claim.incident_date }}</td></tr>
-      <tr><th>Filed</th><td>{{ claim.claim_date.strftime('%Y-%m-%d %H:%M') }}</td></tr>
-      <tr><th>Claimed amount</th><td>${{ "%.2f"|format(claim.claimed_amount) }}</td></tr>
-      <tr><th>Coverage limit</th><td>${{ "%.2f"|format(claim.policy.coverage_limit) }}</td></tr>
-      <tr><th>Prior claims on policy</th><td>{{ claim.policy.prior_claims_count }}</td></tr>
-      <tr><th>Policy start</th><td>{{ claim.policy.start_date }}</td></tr>
-    </table>
-    <p style="margin-bottom:0.3rem"><strong>Description</strong></p>
-    <p class="helptext" style="font-size:0.9rem;color:var(--text)">{{ claim.description }}</p>
+    <div class="fact-grid">
+      <div><div class="k">Incident Date</div><div class="fact-value">{{ claim.incident_date }}</div></div>
+      <div><div class="k">Filed</div><div class="fact-value">{{ claim.claim_date.strftime('%Y-%m-%d') }}</div></div>
+      <div><div class="k">Coverage Limit</div><div class="fact-value">${{ "{:,.0f}".format(claim.policy.coverage_limit) }}</div></div>
+      <div><div class="k">Policy Start</div><div class="fact-value">{{ claim.policy.start_date }}</div></div>
+    </div>
+
     {% if claim.photo_filename %}
-      <a class="btn btn-secondary" href="{{ url_for('claims.uploaded_file', filename=claim.photo_filename) }}" target="_blank">View attached photo/document</a>
+    <div class="k">Attached</div>
+    <div class="photo-grid">
+      <a href="{{ url_for('claims.uploaded_file', filename=claim.photo_filename) }}" target="_blank" class="photo-placeholder halftone" style="text-decoration:none;">
+        <span>{{ claim.photo_filename }}</span>
+      </a>
+    </div>
     {% endif %}
+
+    <div class="k">Audit Trail</div>
+    <div class="audit-trail">
+      {% for event in claim.status_events %}
+      <div class="event">
+        <div class="event-meta">{{ event.timestamp.strftime('%Y-%m-%d %H:%M') }}</div>
+        <div><strong>{{ event.new_status.replace('_',' ')|title }}</strong> by {{ event.changed_by }}{% if event.reason %}: {{ event.reason }}{% endif %}</div>
+      </div>
+      {% endfor %}
+    </div>
   </div>
 
-  <div class="card">
-    <h2 style="margin-top:0">Risk Assessment</h2>
+  <div class="risk-rail">
     {% if claim.risk_score is not none %}
-      {% if claim.ml_score is not none %}
-        <p class="helptext">Logistic regression secondary signal (not used for routing): <strong style="color:var(--text)">{{ "%.0f%%"|format(claim.ml_score * 100) }}</strong> estimated fraud probability</p>
-      {% endif %}
-      <h3 style="font-size:0.85rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted);margin-bottom:0.6rem;">Rules that fired</h3>
-      {% if fired_rules %}
+    <div>
+      <div class="risk-rail-score">
+        <span class="score-num {{ 'risk-high' if claim.risk_priority == 'high' }}">{{ claim.risk_score }}</span>
+        <div class="risk-rail-score-label">{{ claim.risk_priority|title }} Priority<br>{{ fired_rules|length }} of 6 rules fired</div>
+      </div>
+      <div class="score-bar-track"><div class="score-bar-fill {{ 'risk-high' if claim.risk_priority == 'high' }}" style="width: {{ [claim.risk_score, 100]|min }}%;"></div></div>
+      <div class="score-scale"><span>0</span><span>auto-clear &lt; 15</span><span>high &ge; 50</span><span>100</span></div>
+    </div>
+
+    <div>
+      <div class="k">Rules That Fired</div>
+      {% if all_rules %}
       <ul class="rule-list">
-        {% for rule in fired_rules %}
-          <li><span class="rule-points">+{{ rule.points }}</span><span>{{ rule.reason }}</span></li>
+        {% for rule in all_rules %}
+        <li class="{{ '' if rule.fired else 'not-fired' }}"><span class="rule-points">{{ '+%d'|format(rule.points) if rule.fired else '0' }}</span><span>{{ rule.reason }}</span></li>
         {% endfor %}
       </ul>
-      {% else %}
-        <p class="helptext">No risk rules fired on this claim.</p>
       {% endif %}
-    {% else %}
-      <p class="helptext">Not yet scored.</p>
+    </div>
+
+    {% if claim.ml_score is not none %}
+    <div class="card elev-sm">
+      <div class="card-kicker">Second Opinion &middot; Not Part of Routing</div>
+      <div style="font-family:var(--font-heading);font-weight:600;font-size:26px;">{{ "%.0f%%"|format(claim.ml_score * 100) }}</div>
+      <p class="card-body">Estimated fraud probability from a logistic regression model, scored separately and shown here for context only.</p>
+    </div>
     {% endif %}
 
     {% if claim.status == 'pending_review' %}
-    <h2>Adjuster Action</h2>
-    <form method="post" action="{{ url_for('adjuster.transition', claim_id=claim.id) }}">
-      <label for="notes">Notes</label>
-      <textarea name="notes" id="notes" placeholder="Reason for this decision (optional)"></textarea>
-      <button type="submit" name="action" value="approve">Approve</button>
-      <button type="submit" name="action" value="deny" class="btn-deny">Deny</button>
-      {% if claim.risk_priority == 'high' %}
-        <button type="submit" name="action" value="lower_priority" class="btn-secondary">Lower Priority</button>
-      {% endif %}
-    </form>
-    {% elif claim.status == 'approved' %}
-    <h2>Adjuster Action</h2>
-    <form method="post" action="{{ url_for('adjuster.transition', claim_id=claim.id) }}">
-      <label for="notes">Notes</label>
-      <textarea name="notes" id="notes" placeholder="Payment notes (optional)"></textarea>
-      <button type="submit" name="action" value="mark_paid">Mark Paid</button>
-    </form>
-    {% endif %}
-  </div>
-</div>
-
-<div class="card">
-  <h2 style="margin-top:0">Audit Trail</h2>
-  <div class="audit-trail">
-    {% for event in claim.status_events %}
-    <div class="event event-{{ event.new_status }}">
-      <div><strong>{{ event.old_status or 'created' }} &rarr; {{ event.new_status }}</strong></div>
-      <div class="event-meta">{{ event.timestamp.strftime('%Y-%m-%d %H:%M') }} by {{ event.changed_by }}</div>
-      {% if event.reason %}<div style="font-size:0.9rem;margin-top:0.15rem;">{{ event.reason }}</div>{% endif %}
+    <div>
+      <form method="post" action="{{ url_for('adjuster.transition', claim_id=claim.id) }}">
+        <label for="notes">Notes</label>
+        <textarea name="notes" id="notes" placeholder="Reason for this decision (optional)"></textarea>
+        <div class="action-stack">
+          <button type="submit" name="action" value="approve" class="btn-block">Approve Claim</button>
+          <div class="action-row">
+            <button type="submit" name="action" value="deny" class="btn-deny">Deny</button>
+            {% if claim.risk_priority == 'high' %}
+              <button type="submit" name="action" value="lower_priority" class="btn-secondary">Lower Priority</button>
+            {% endif %}
+          </div>
+        </div>
+      </form>
     </div>
-    {% endfor %}
+    {% elif claim.status == 'approved' %}
+    <div>
+      <form method="post" action="{{ url_for('adjuster.transition', claim_id=claim.id) }}">
+        <label for="notes">Notes</label>
+        <textarea name="notes" id="notes" placeholder="Payment notes (optional)"></textarea>
+        <button type="submit" name="action" value="mark_paid" class="btn-block">Mark Paid</button>
+      </form>
+    </div>
+    {% endif %}
+    {% else %}
+    <p class="helptext">Not yet scored.</p>
+    {% endif %}
   </div>
 </div>
 
 {% else %}
-{# ---------------------------------------------------------------- customer: the stressed-human view. One answer first, everything else behind a fold. #}
-<div class="status-hero mood-{{ mood }}">
-  <div class="status-hero-eyebrow">Claim #{{ claim.id }} &middot; filed {{ claim.claim_date.strftime('%B %d, %Y') }}</div>
-  <h1>{{ headline }}</h1>
-  <p>{{ subhead }}</p>
+{# ---------------------------------------------------------------- customer: the stressed-human view. One answer first, everything else behind a fold. No risk score, rule name, priority or internal note ever renders here. #}
+<div class="k">Claim #{{ claim.id }} &middot; Filed {{ claim.claim_date.strftime('%B %d, %Y') }}</div>
+<h2 class="portal-headline">{{ headline }}</h2>
+<p class="portal-lede">{{ subhead }}</p>
+
+<div class="progress-row">
+  {% for step in progress %}
+  <div class="progress-step {{ 'is-future' if step.is_future }}">
+    <div class="k">{{ step.label }}</div>
+    <div class="progress-step-value">{{ step.value }}</div>
+    <div class="progress-bar-track"><div class="progress-bar-fill" style="width: {{ step.fraction }}%;"></div></div>
+    <div class="progress-step-caption">{{ step.caption }}</div>
+  </div>
+  {% endfor %}
 </div>
 
 <div class="claim-layout">
-  <div class="card">
-    <h2 style="margin-top:0">What's happening</h2>
+  <div>
+    <div class="k">What's Happening</div>
     <ul class="narrative-timeline">
       {% for step in timeline %}
       <li class="{{ 'is-current' if step.is_current }}">
         <div class="step-text">{{ step.text }}</div>
-        {% if step.detail %}<div class="step-text" style="margin-top:0.35rem;font-style:italic;color:var(--muted);">&ldquo;{{ step.detail }}&rdquo;</div>{% endif %}
+        {% if step.detail %}<div class="step-text" style="margin-top:0.35rem;font-style:italic;color:color-mix(in srgb, var(--color-text) 55%, transparent);">&ldquo;{{ step.detail }}&rdquo;</div>{% endif %}
         <div class="step-date">{{ step.date.strftime('%B %d, %Y') }}</div>
       </li>
       {% endfor %}
@@ -114,14 +140,14 @@
   </div>
 
   <div class="next-steps-panel">
-    <div class="eyebrow">What we need from you</div>
-    <h2 style="margin-top:0">Next steps</h2>
-    <p>{{ next_steps }}</p>
+    <div class="eyebrow k">What We Need From You</div>
+    <h3 style="margin-top:0">Next Steps</h3>
+    <p style="margin-bottom:0;">{{ next_steps }}</p>
   </div>
 </div>
 
 <details class="details-disclosure">
-  <summary>Claim details</summary>
+  <summary>Claim Details</summary>
   <div class="details-body">
     <table class="kv-table">
       <tr><th>Incident type</th><td>{{ claim.incident_type.replace('_',' ')|title }}</td></tr>
@@ -131,7 +157,7 @@
       <tr><th>Coverage limit</th><td>${{ "%.2f"|format(claim.policy.coverage_limit) }}</td></tr>
     </table>
     <p style="margin-bottom:0.3rem"><strong>What you told us happened</strong></p>
-    <p class="helptext" style="font-size:0.9rem;color:var(--text)">{{ claim.description }}</p>
+    <p class="helptext" style="font-size:0.9rem;">{{ claim.description }}</p>
     {% if claim.photo_filename %}
       <a class="btn btn-secondary" href="{{ url_for('claims.uploaded_file', filename=claim.photo_filename) }}" target="_blank">View attached photo/document</a>
     {% endif %}

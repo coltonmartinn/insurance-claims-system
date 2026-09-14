@@ -5,7 +5,7 @@
 <h1>Policy Created</h1>
 <p class="subtitle">Policy #{{ policy.id }} for {{ policy.policyholder.name }}</p>
 
-<div class="stat-row">
+<div class="stat-row" style="margin:var(--space-6) 0 var(--space-8);">
   <div class="stat">
     <div class="value">${{ "%.2f"|format(policy.premium) }}</div>
     <div class="label">Annual Premium</div>
@@ -20,8 +20,10 @@
   </div>
 </div>
 
-<div class="card">
-  <h2 style="margin-top:0">Premium Breakdown</h2>
+<div class="hr"></div>
+
+<div class="section" style="margin-top:var(--space-8);">
+  <h2>Premium Breakdown</h2>
   <table>
     <thead><tr><th>Factor</th><th>Multiplier</th><th>Explanation</th></tr></thead>
     <tbody>
@@ -37,10 +39,12 @@
   </table>
 </div>
 
-<div class="card">
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;">
+<div class="hr"></div>
+
+<div class="section" style="margin-top:var(--space-8);">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:var(--space-4);">
     <div>
-      <h2 style="margin-top:0">Underwriting Risk</h2>
+      <h2>Underwriting Risk</h2>
       <p class="helptext" style="max-width:520px;">
         A separate, advisory estimate of how much risk the company takes on by issuing this policy at all,
         based on driver experience, vehicle exposure, prior loss history, territory, and payout size. Like

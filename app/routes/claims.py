@@ -13,7 +13,7 @@ from app.models import Policy, Claim, INCIDENT_TYPES
 from app.auth import login_required
 from app.claim_service import file_claim
 from app.validation import ValidationError, validate_int, validate_incident_date, validate_claimed_amount
-from app import narrative
+from app import narrative, triage
 
 bp = Blueprint("claims", __name__, url_prefix="/claims")
 
@@ -112,6 +112,17 @@ def claim_detail(claim_id):
 
     fired_rules = json.loads(claim.risk_explanation) if claim.risk_explanation else []
 
+    all_rules = None
+    if claim.risk_score is not None:
+        all_rules = []
+        for rule_fn in triage.RULES:
+            points, fired, reason = rule_fn(claim, claim.policy)
+            all_rules.append({
+                "points": points,
+                "fired": fired,
+                "reason": reason if fired else triage.RULE_LABELS[rule_fn.__name__],
+            })
+
     timeline = [
         {"text": text, "detail": detail, "date": event.timestamp, "is_current": i == len(claim.status_events) - 1}
         for i, event in enumerate(claim.status_events)
@@ -119,11 +130,12 @@ def claim_detail(claim_id):
     ]
 
     return render_template(
-        "claim_detail.html", claim=claim, fired_rules=fired_rules, timeline=timeline,
+        "claim_detail.html", claim=claim, fired_rules=fired_rules, all_rules=all_rules, timeline=timeline,
         mood=narrative.current_mood(claim.status),
         headline=narrative.headline_for_status(claim.status),
         subhead=narrative.subhead_for_status(claim.status),
         next_steps=narrative.next_steps_for_status(claim.status),
+        progress=narrative.progress_for_status(claim.status),
     )
 
 

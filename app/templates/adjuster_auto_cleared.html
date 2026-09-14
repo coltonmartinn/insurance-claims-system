@@ -4,34 +4,32 @@
 {% block content %}
 <div class="page-header">
   <div>
-    <h1>Auto-Cleared Claims</h1>
+    <h2>Auto-Cleared Claims</h2>
     <p class="subtitle">Claims the system cleared on its own, without an adjuster ever making a decision. Shown here for oversight only, sorted by most recent first.</p>
   </div>
 </div>
 
-<div class="card">
-  {% if claims %}
-  <div class="table-wrap">
-  <table>
-    <thead>
-      <tr><th>ID</th><th>Policy</th><th>Type</th><th>Amount</th><th>Risk Score</th><th>Filed</th></tr>
-    </thead>
-    <tbody>
-      {% for claim in claims %}
-      <tr onclick="window.location='{{ url_for('claims.claim_detail', claim_id=claim.id) }}'" style="cursor:pointer">
-        <td>#{{ claim.id }}</td>
-        <td>#{{ claim.policy_id }} ({{ claim.policy.policyholder.name }})</td>
-        <td>{{ claim.incident_type.replace('_',' ')|title }}</td>
-        <td>${{ "%.2f"|format(claim.claimed_amount) }}</td>
-        <td>{{ risk_meter(claim.risk_score, claim.risk_priority or 'low') }}</td>
-        <td>{{ claim.claim_date.strftime('%Y-%m-%d') }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  </div>
-  {% else %}
-  <p class="helptext">No claims have been auto-cleared yet.</p>
-  {% endif %}
+{% if claims %}
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>ID</th><th>Policy</th><th>Type</th><th>Amount</th><th>Risk Score</th><th>Filed</th></tr>
+  </thead>
+  <tbody>
+    {% for claim in claims %}
+    <tr onclick="window.location='{{ url_for('claims.claim_detail', claim_id=claim.id) }}'" style="cursor:pointer">
+      <td>#{{ claim.id }}</td>
+      <td>#{{ claim.policy_id }} ({{ claim.policy.policyholder.name }})</td>
+      <td>{{ claim.incident_type.replace('_',' ')|title }}</td>
+      <td>${{ "%.2f"|format(claim.claimed_amount) }}</td>
+      <td>{{ risk_meter(claim.risk_score, claim.risk_priority or 'low') }}</td>
+      <td>{{ claim.claim_date.strftime('%Y-%m-%d') }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 </div>
+{% else %}
+<p class="helptext">No claims have been auto-cleared yet.</p>
+{% endif %}
 {% endblock %}

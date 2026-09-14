@@ -3,12 +3,12 @@
 {% block content %}
 <div class="page-header">
   <div>
-    <h1>Dashboard</h1>
+    <h2>Claims Operations</h2>
     <p class="subtitle">{{ total_claims }} claims total, {{ scored_count }} scored by the triage engine.</p>
   </div>
 </div>
 
-<div class="stat-row">
+<div class="grid-4" style="margin-bottom:var(--space-8);">
   {% for status, count in status_counts.items() %}
   <div class="stat">
     <div class="value">{{ count }}</div>
@@ -17,8 +17,10 @@
   {% endfor %}
 </div>
 
-<h2>Claims by Status</h2>
-<div class="card">
+<div class="hr"></div>
+
+<div class="section" style="margin-top:var(--space-8);">
+  <h2>Where Claims Went</h2>
   {% if status_breakdown %}
   <div class="stacked-bar">
     {% for seg in status_breakdown %}
@@ -35,17 +37,21 @@
   {% endif %}
 </div>
 
-<h2>Time to Resolution</h2>
-<div class="card">
+<div class="hr"></div>
+
+<div class="section" style="margin-top:var(--space-8);">
+  <h2>Time to Resolution</h2>
   {% if avg_resolution_hours is not none %}
-    <p>Average time from claim filing to resolution (auto-cleared, approved, or denied): <strong style="color:var(--navy)">{{ "%.1f"|format(avg_resolution_hours) }} hours</strong></p>
+    <p>Average time from claim filing to resolution (auto-cleared, approved, or denied): <strong>{{ "%.1f"|format(avg_resolution_hours) }} hours</strong></p>
   {% else %}
     <p class="helptext">No resolved claims yet.</p>
   {% endif %}
 </div>
 
-<h2>Risk Score Distribution</h2>
-<div class="card">
+<div class="hr"></div>
+
+<div class="section" style="margin-top:var(--space-8);">
+  <h2>Risk Score Distribution</h2>
   <div class="bar-chart">
     {% for bucket in score_distribution %}
     <div class="bar-chart-col">
@@ -57,17 +63,22 @@
   </div>
 </div>
 
-<h2>Secondary Model Performance</h2>
-<div class="card">
+<div class="hr"></div>
+
+<div class="section" style="margin-top:var(--space-8);max-width:560px;">
   {% if model_metrics %}
-  <p class="helptext">Logistic regression evaluated on a held-out 25% test split of synthetic data ({{ model_metrics.n_test }} claims, {{ "%.0f%%"|format(model_metrics.test_label_prevalence * 100) }} labeled fraudulent). Reported alongside accuracy because the label is imbalanced; accuracy alone would be misleading.</p>
-  <div class="stat-row" style="margin-top:0.75rem;">
-    <div class="stat"><div class="value">{{ "%.2f"|format(model_metrics.roc_auc) }}</div><div class="label">ROC-AUC</div></div>
-    <div class="stat"><div class="value">{{ "%.0f%%"|format(model_metrics.precision * 100) }}</div><div class="label">Precision</div></div>
-    <div class="stat"><div class="value">{{ "%.0f%%"|format(model_metrics.recall * 100) }}</div><div class="label">Recall</div></div>
-    <div class="stat"><div class="value">{{ "%.0f%%"|format(model_metrics.f1 * 100) }}</div><div class="label">F1</div></div>
+  <div class="card elev-sm">
+    <div class="card-kicker">Model Monitoring &middot; Secondary Signal</div>
+    <div class="card-title">Logistic regression, held-out evaluation</div>
+    <p class="card-body">Evaluated on a held-out 25% test split of synthetic data ({{ model_metrics.n_test }} claims, {{ "%.0f%%"|format(model_metrics.test_label_prevalence * 100) }} labeled fraudulent). Reported alongside accuracy because the label is imbalanced: accuracy alone would be misleading. At the 0.5 threshold the model misses most positives; that's acceptable here only because nothing routes on this score by itself.</p>
+    <div class="grid-2" style="gap:var(--space-3);margin-top:var(--space-2);">
+      <div><div class="k" style="margin-bottom:2px;">ROC-AUC</div><div style="font-family:var(--font-heading);font-weight:600;font-size:20px;">{{ "%.3f"|format(model_metrics.roc_auc) }}</div></div>
+      <div><div class="k" style="margin-bottom:2px;">Precision</div><div style="font-family:var(--font-heading);font-weight:600;font-size:20px;">{{ "%.0f%%"|format(model_metrics.precision * 100) }}</div></div>
+      <div><div class="k" style="margin-bottom:2px;">Recall</div><div style="font-family:var(--font-heading);font-weight:600;font-size:20px;color:var(--color-accent-2-700);">{{ "%.1f%%"|format(model_metrics.recall * 100) }}</div></div>
+      <div><div class="k" style="margin-bottom:2px;">Prevalence</div><div style="font-family:var(--font-heading);font-weight:600;font-size:20px;">{{ "%.1f%%"|format(model_metrics.test_label_prevalence * 100) }}</div></div>
+    </div>
+    <div class="card-meta">n_test {{ "{:,}".format(model_metrics.n_test) }} &middot; TP {{ model_metrics.confusion_matrix.true_positive }} &middot; FP {{ model_metrics.confusion_matrix.false_positive }} &middot; FN {{ model_metrics.confusion_matrix.false_negative }} &middot; TN {{ model_metrics.confusion_matrix.true_negative }}</div>
   </div>
-  <p class="helptext" style="margin-top:0.9rem;">Confusion matrix (test set): TP {{ model_metrics.confusion_matrix.true_positive }} &middot; FP {{ model_metrics.confusion_matrix.false_positive }} &middot; FN {{ model_metrics.confusion_matrix.false_negative }} &middot; TN {{ model_metrics.confusion_matrix.true_negative }}</p>
   {% else %}
   <p class="helptext">No trained model found. Run <code>python tools/train_model.py</code> to train the optional secondary signal and generate this report.</p>
   {% endif %}

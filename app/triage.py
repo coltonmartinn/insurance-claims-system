@@ -105,6 +105,17 @@ RULES = [
     rule_late_reporting,
 ]
 
+# What each rule checks, for display when it did NOT fire (fired rules use
+# their own specific reason string instead).
+RULE_LABELS = {
+    "rule_amount_to_limit_ratio": "Claimed amount vs. coverage limit",
+    "rule_new_policy_incident_gap": "Incident shortly after policy start",
+    "rule_prior_claims_history": "Prior claims on this policy",
+    "rule_round_number_amount": "Round-number claimed amount",
+    "rule_type_description_mismatch": "Description matches a different incident type",
+    "rule_late_reporting": "Claim reported long after the incident",
+}
+
 
 @dataclass
 class TriageResult:

@@ -18,12 +18,12 @@ SCORE_BUCKETS = [
 ]
 
 STATUS_COLOR_VAR = {
-    "submitted": "--navy-light",
-    "auto_cleared": "--green",
-    "pending_review": "--amber",
-    "approved": "--green",
-    "denied": "--red",
-    "paid": "--accent",
+    "submitted": "--color-neutral-400",
+    "auto_cleared": "--color-accent-500",
+    "pending_review": "--color-accent-2-600",
+    "approved": "--color-accent-700",
+    "denied": "--color-neutral-700",
+    "paid": "--color-accent-900",
 }
 
 
@@ -56,7 +56,7 @@ def dashboard():
             "status": status,
             "count": count,
             "pct": round(count / total * 100, 1),
-            "color_var": STATUS_COLOR_VAR.get(status, "--muted"),
+            "color_var": STATUS_COLOR_VAR.get(status, "--color-neutral-500"),
         }
         for status, count in status_counts.items()
         if count > 0

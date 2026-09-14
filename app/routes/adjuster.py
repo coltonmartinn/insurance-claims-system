@@ -1,3 +1,5 @@
+import json
+
 from flask import Blueprint, render_template, request, redirect, url_for, flash, g, abort
 
 from app.extensions import db
@@ -20,7 +22,11 @@ def queue():
         .order_by(Claim.risk_score.desc())
         .all()
     )
-    return render_template("adjuster_queue.html", claims=claims)
+    top_rules = {}
+    for claim in claims:
+        fired = json.loads(claim.risk_explanation) if claim.risk_explanation else []
+        top_rules[claim.id] = fired[0] if fired else None
+    return render_template("adjuster_queue.html", claims=claims, top_rules=top_rules)
 
 
 @bp.route("/auto-cleared")

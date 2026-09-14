@@ -2,50 +2,48 @@
 {% from "_forms.html" import field_error %}
 {% block title %}File a Claim{% endblock %}
 {% block content %}
-<h1>File a Claim</h1>
+<h2>File a Claim</h2>
 <p class="subtitle">Submitting runs the claim through automatic risk triage. Low-risk, low-value claims may be auto-cleared; everything else goes to an adjuster.</p>
 
-<div class="card">
-  <form method="post" enctype="multipart/form-data">
-    <label for="policy_id">Policy</label>
-    {{ field_error(field_errors, 'policy_id') }}
-    <select name="policy_id" id="policy_id" required>
-      <option value="" disabled {{ "" if form else "selected" }}>Select a policy&hellip;</option>
-      {% for policy in policies %}
-        <option value="{{ policy.id }}" {{ "selected" if form and form.get('policy_id') == policy.id|string }}>#{{ policy.id }} ({{ policy.policyholder.name }}), {{ policy.vehicle_year }} {{ policy.vehicle_make }} {{ policy.vehicle_model }} (limit ${{ "%.0f"|format(policy.coverage_limit) }})</option>
-      {% endfor %}
-    </select>
+<form method="post" enctype="multipart/form-data" style="max-width:640px;">
+  <label for="policy_id">Policy</label>
+  {{ field_error(field_errors, 'policy_id') }}
+  <select name="policy_id" id="policy_id" required>
+    <option value="" disabled {{ "" if form else "selected" }}>Select a policy&hellip;</option>
+    {% for policy in policies %}
+      <option value="{{ policy.id }}" {{ "selected" if form and form.get('policy_id') == policy.id|string }}>#{{ policy.id }} ({{ policy.policyholder.name }}), {{ policy.vehicle_year }} {{ policy.vehicle_make }} {{ policy.vehicle_model }} (limit ${{ "%.0f"|format(policy.coverage_limit) }})</option>
+    {% endfor %}
+  </select>
 
-    <div class="grid-2">
-      <div>
-        <label for="incident_type">Incident type</label>
-        <select name="incident_type" id="incident_type" required>
-          {% for t in incident_types %}
-            <option value="{{ t }}" {{ "selected" if form and form.get('incident_type') == t }}>{{ t.replace('_',' ')|title }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div>
-        <label for="incident_date">Incident date</label>
-        {{ field_error(field_errors, 'incident_date') }}
-        <input type="date" name="incident_date" id="incident_date" max="{{ today }}"
-               value="{{ form.get('incident_date', '') if form else '' }}" required>
-      </div>
+  <div class="grid-2">
+    <div>
+      <label for="incident_type">Incident type</label>
+      <select name="incident_type" id="incident_type" required>
+        {% for t in incident_types %}
+          <option value="{{ t }}" {{ "selected" if form and form.get('incident_type') == t }}>{{ t.replace('_',' ')|title }}</option>
+        {% endfor %}
+      </select>
     </div>
+    <div>
+      <label for="incident_date">Incident date</label>
+      {{ field_error(field_errors, 'incident_date') }}
+      <input type="date" name="incident_date" id="incident_date" max="{{ today }}"
+             value="{{ form.get('incident_date', '') if form else '' }}" required>
+    </div>
+  </div>
 
-    <label for="claimed_amount">Claimed amount ($)</label>
-    {{ field_error(field_errors, 'claimed_amount') }}
-    <input type="number" name="claimed_amount" id="claimed_amount" min="0.01" step="0.01"
-           value="{{ form.get('claimed_amount', '') if form else '' }}" required>
+  <label for="claimed_amount">Claimed amount ($)</label>
+  {{ field_error(field_errors, 'claimed_amount') }}
+  <input type="number" name="claimed_amount" id="claimed_amount" min="0.01" step="0.01"
+         value="{{ form.get('claimed_amount', '') if form else '' }}" required>
 
-    <label for="description">Description</label>
-    <textarea name="description" id="description" required placeholder="What happened?">{{ form.get('description', '') if form else '' }}</textarea>
+  <label for="description">Description</label>
+  <textarea name="description" id="description" required placeholder="What happened?">{{ form.get('description', '') if form else '' }}</textarea>
 
-    <label for="photo">Photo or document (optional)</label>
-    {{ field_error(field_errors, 'photo') }}
-    <input type="file" name="photo" id="photo" accept=".png,.jpg,.jpeg,.gif,.pdf">
+  <label for="photo">Photo or document (optional)</label>
+  {{ field_error(field_errors, 'photo') }}
+  <input type="file" name="photo" id="photo" accept=".png,.jpg,.jpeg,.gif,.pdf">
 
-    <button type="submit">Submit Claim</button>
-  </form>
-</div>
+  <button type="submit">Submit Claim</button>
+</form>
 {% endblock %}

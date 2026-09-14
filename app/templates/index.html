@@ -2,44 +2,49 @@
 {% from "_icons.html" import icon %}
 {% block title %}Meridian Auto Claims Triage{% endblock %}
 {% block content %}
-<div class="hero">
-  <h1>Claims Triage System</h1>
-  <p class="subtitle">A triage layer for auto insurance claims: score every claim, auto-clear the clean ones, and route everything else to a human adjuster.</p>
-  <div class="hero-stats">
-    <div><strong>6</strong><span>Explainable risk rules</span></div>
-    <div><strong>0</strong><span>Auto-denials, ever</span></div>
-    <div><strong>100%</strong><span>Auditable decisions</span></div>
-  </div>
+<div class="k">Meridian Auto &middot; Claims Triage</div>
+<h1 style="max-width:16ch;">A triage layer for auto insurance claims</h1>
+<p class="subtitle" style="font-size:17px;max-width:60ch;">Score every claim, auto-clear the clean ones, and route everything else to a human adjuster. Nothing gets denied without a person deciding it.</p>
+<div class="hero-stats">
+  <div><strong>6</strong><span>Explainable risk rules</span></div>
+  <div><strong>0</strong><span>Auto-denials, ever</span></div>
+  <div><strong>100%</strong><span>Auditable decisions</span></div>
 </div>
 
-<div class="card">
-  <h2 style="margin-top:0">How this works</h2>
-  <div class="grid-2" style="gap: 1.5rem;">
+<div class="hr" style="margin-top:var(--space-8);"></div>
+
+<div class="section" style="margin-top:var(--space-8);">
+  <h2>How this works</h2>
+  <div class="grid-2">
     <div>
       <div class="feature-icon">{{ icon('shield', 20) }}</div>
-      <p style="margin: 0 0 0.4rem; font-weight: 700; color: var(--navy)">The system never denies a claim</p>
-      <p class="helptext" style="font-size: 0.87rem;">Every submitted claim is scored by a rules engine using factors like claimed amount vs. coverage limit, time since policy start, and prior claims history.</p>
+      <p style="margin: 0 0 0.4rem; font-weight: 600;">The system never denies a claim</p>
+      <p class="helptext">Every submitted claim is scored by a rules engine using factors like claimed amount vs. coverage limit, time since policy start, and prior claims history.</p>
     </div>
     <div>
       <div class="feature-icon">{{ icon('queue', 20) }}</div>
-      <p style="margin: 0 0 0.4rem; font-weight: 700; color: var(--navy)">Auto-clear for clean claims only</p>
-      <p class="helptext" style="font-size: 0.87rem;">Low-value, low-risk, clean claims are auto-cleared instantly. Everything else (ambiguous, high-value, or flagged) goes to an adjuster's review queue.</p>
+      <p style="margin: 0 0 0.4rem; font-weight: 600;">Auto-clear for clean claims only</p>
+      <p class="helptext">Low-value, low-risk, clean claims are auto-cleared instantly. Everything else (ambiguous, high-value, or flagged) goes to an adjuster's review queue.</p>
     </div>
   </div>
 </div>
 
-<div class="grid-2">
-  <div class="card">
-    <div class="feature-icon">{{ icon('quote', 20) }}</div>
-    <h2 style="margin-top:0">Get a quote</h2>
-    <p>Start a new policy by requesting a quote.</p>
-    <a class="btn" href="{{ url_for('quotes.new_quote') }}">New Quote</a>
-  </div>
-  <div class="card">
-    <div class="feature-icon">{{ icon('user', 20) }}</div>
-    <h2 style="margin-top:0">Existing customers &amp; adjusters</h2>
-    <p>Log in to file or track a claim, or (for adjusters) review the queue.</p>
-    <a class="btn" href="{{ url_for('auth.login') }}">Log in</a>
+<div class="hr"></div>
+
+<div class="section" style="margin-top:var(--space-8);">
+  <div class="grid-2">
+    <div>
+      <div class="feature-icon">{{ icon('quote', 20) }}</div>
+      <h3>Get a quote</h3>
+      <p class="helptext" style="margin-bottom:0.6rem;">Start a new policy by requesting a quote.</p>
+      <a class="btn" href="{{ url_for('quotes.new_quote') }}">New Quote</a>
+    </div>
+    <div>
+      <div class="feature-icon">{{ icon('user', 20) }}</div>
+      <h3>Existing customers &amp; adjusters</h3>
+      <p class="helptext" style="margin-bottom:0.6rem;">Log in to file or track a claim, or (for adjusters) review the queue.</p>
+      <a class="btn btn-secondary" href="{{ url_for('auth.login') }}">Log In</a>
+    </div>
   </div>
 </div>
 {% endblock %}

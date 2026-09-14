@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, g, render_template, request
+from flask import Flask, g, render_template, request, session
 
 from app.extensions import db
 from app.auth import load_logged_in_user
@@ -59,7 +59,13 @@ def create_app(test_config=None):
 
     @app.context_processor
     def _inject_user():
-        return {"current_user": g.get("user", None)}
+        from app.models import Claim
+
+        user = g.get("user", None)
+        pending_review_count = None
+        if user and (user.role == "adjuster" or session.get("reviewer_mode")):
+            pending_review_count = Claim.query.filter_by(status="pending_review").count()
+        return {"current_user": user, "pending_review_count": pending_review_count}
 
     @app.route("/")
     def index():

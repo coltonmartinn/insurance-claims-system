@@ -2,87 +2,86 @@
 {% from "_forms.html" import field_error %}
 {% block title %}New Quote{% endblock %}
 {% block content %}
-<h1>Get a Quote</h1>
+<h2>Get a Quote</h2>
 <p class="subtitle">Premium is computed from a small set of weighted rating factors; see the breakdown after you submit.</p>
 
-<div class="card">
-  <form method="post">
-    <h2 style="margin-top:0">Policyholder</h2>
-    <div class="grid-2">
-      <div>
-        <label for="name">Full name</label>
-        <input type="text" name="name" id="name" value="{{ form.get('name', '') if form else '' }}" required>
-      </div>
-      <div>
-        <label for="email">Email</label>
-        <input type="email" name="email" id="email" value="{{ form.get('email', '') if form else '' }}" required>
-      </div>
+<form method="post" style="max-width:720px;">
+  <h3>Policyholder</h3>
+  <div class="grid-2">
+    <div>
+      <label for="name">Full name</label>
+      <input type="text" name="name" id="name" value="{{ form.get('name', '') if form else '' }}" required>
     </div>
-    <div class="grid-2">
-      <div>
-        <label for="phone">Phone</label>
-        <input type="text" name="phone" id="phone" value="{{ form.get('phone', '') if form else '' }}">
-      </div>
-      <div>
-        <label for="date_of_birth">Date of birth</label>
-        {{ field_error(field_errors, 'date_of_birth') }}
-        <input type="date" name="date_of_birth" id="date_of_birth" value="{{ form.get('date_of_birth', '') if form else '' }}" required>
-      </div>
+    <div>
+      <label for="email">Email</label>
+      <input type="email" name="email" id="email" value="{{ form.get('email', '') if form else '' }}" required>
     </div>
-    <div class="grid-2">
-      <div>
-        <label for="address">Address</label>
-        <input type="text" name="address" id="address" value="{{ form.get('address', '') if form else '' }}">
-      </div>
-      <div>
-        <label for="territory">Territory (ZIP code)</label>
-        {{ field_error(field_errors, 'territory') }}
-        <input type="text" name="territory" id="territory" value="{{ form.get('territory', '') if form else '' }}" required pattern="\d{5}" placeholder="e.g. 44107">
-      </div>
+  </div>
+  <div class="grid-2">
+    <div>
+      <label for="phone">Phone</label>
+      <input type="text" name="phone" id="phone" value="{{ form.get('phone', '') if form else '' }}">
     </div>
+    <div>
+      <label for="date_of_birth">Date of birth</label>
+      {{ field_error(field_errors, 'date_of_birth') }}
+      <input type="date" name="date_of_birth" id="date_of_birth" value="{{ form.get('date_of_birth', '') if form else '' }}" required>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div>
+      <label for="address">Address</label>
+      <input type="text" name="address" id="address" value="{{ form.get('address', '') if form else '' }}">
+    </div>
+    <div>
+      <label for="territory">Territory (ZIP code)</label>
+      {{ field_error(field_errors, 'territory') }}
+      <input type="text" name="territory" id="territory" value="{{ form.get('territory', '') if form else '' }}" required pattern="\d{5}" placeholder="e.g. 44107">
+    </div>
+  </div>
 
-    <h2>Vehicle &amp; Coverage</h2>
-    <div class="grid-2">
-      <div>
-        <label for="vehicle_year">Vehicle year</label>
-        {{ field_error(field_errors, 'vehicle_year') }}
-        <input type="number" name="vehicle_year" id="vehicle_year" min="{{ min_vehicle_year }}" max="{{ max_vehicle_year }}"
-               value="{{ form.get('vehicle_year', '') if form else '' }}" required>
-        <p class="helptext">{{ min_vehicle_year }}&ndash;{{ max_vehicle_year }}</p>
-      </div>
-      <div>
-        <label for="vehicle_make">Make</label>
-        <input type="text" name="vehicle_make" id="vehicle_make" value="{{ form.get('vehicle_make', '') if form else '' }}" required>
-      </div>
+  <div class="hr"></div>
+  <h3>Vehicle &amp; Coverage</h3>
+  <div class="grid-2">
+    <div>
+      <label for="vehicle_year">Vehicle year</label>
+      {{ field_error(field_errors, 'vehicle_year') }}
+      <input type="number" name="vehicle_year" id="vehicle_year" min="{{ min_vehicle_year }}" max="{{ max_vehicle_year }}"
+             value="{{ form.get('vehicle_year', '') if form else '' }}" required>
+      <p class="helptext">{{ min_vehicle_year }}&ndash;{{ max_vehicle_year }}</p>
     </div>
-    <div class="grid-2">
-      <div>
-        <label for="vehicle_model">Model</label>
-        <input type="text" name="vehicle_model" id="vehicle_model" value="{{ form.get('vehicle_model', '') if form else '' }}" required>
-      </div>
-      <div>
-        <label for="coverage_limit">Coverage limit ($)</label>
-        {{ field_error(field_errors, 'coverage_limit') }}
-        <input type="number" name="coverage_limit" id="coverage_limit" min="{{ min_coverage_limit }}" step="500"
-               value="{{ form.get('coverage_limit', 50000) if form else 50000 }}" required>
-        <p class="helptext">Minimum ${{ "{:,}".format(min_coverage_limit) }}</p>
-      </div>
+    <div>
+      <label for="vehicle_make">Make</label>
+      <input type="text" name="vehicle_make" id="vehicle_make" value="{{ form.get('vehicle_make', '') if form else '' }}" required>
     </div>
-    <div class="grid-2">
-      <div>
-        <label for="prior_claims_count">Prior claims (last 5 years)</label>
-        {{ field_error(field_errors, 'prior_claims_count') }}
-        <input type="number" name="prior_claims_count" id="prior_claims_count" min="0" max="{{ max_prior_claims }}"
-               value="{{ form.get('prior_claims_count', 0) if form else 0 }}" required>
-      </div>
-      <div>
-        <label for="start_date">Policy start date</label>
-        {{ field_error(field_errors, 'start_date') }}
-        <input type="date" name="start_date" id="start_date" value="{{ form.get('start_date', today) if form else today }}" required>
-      </div>
+  </div>
+  <div class="grid-2">
+    <div>
+      <label for="vehicle_model">Model</label>
+      <input type="text" name="vehicle_model" id="vehicle_model" value="{{ form.get('vehicle_model', '') if form else '' }}" required>
     </div>
+    <div>
+      <label for="coverage_limit">Coverage limit ($)</label>
+      {{ field_error(field_errors, 'coverage_limit') }}
+      <input type="number" name="coverage_limit" id="coverage_limit" min="{{ min_coverage_limit }}" step="500"
+             value="{{ form.get('coverage_limit', 50000) if form else 50000 }}" required>
+      <p class="helptext">Minimum ${{ "{:,}".format(min_coverage_limit) }}</p>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div>
+      <label for="prior_claims_count">Prior claims (last 5 years)</label>
+      {{ field_error(field_errors, 'prior_claims_count') }}
+      <input type="number" name="prior_claims_count" id="prior_claims_count" min="0" max="{{ max_prior_claims }}"
+             value="{{ form.get('prior_claims_count', 0) if form else 0 }}" required>
+    </div>
+    <div>
+      <label for="start_date">Policy start date</label>
+      {{ field_error(field_errors, 'start_date') }}
+      <input type="date" name="start_date" id="start_date" value="{{ form.get('start_date', today) if form else today }}" required>
+    </div>
+  </div>
 
-    <button type="submit">Calculate Premium &amp; Create Policy</button>
-  </form>
-</div>
+  <button type="submit">Calculate Premium &amp; Create Policy</button>
+</form>
 {% endblock %}

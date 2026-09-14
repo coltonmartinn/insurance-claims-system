@@ -4,7 +4,7 @@
 {% block content %}
 <div class="page-header">
   <div>
-    <h1>{{ 'All Claims' if current_user.role == 'adjuster' else 'Your Claims' }}</h1>
+    <h2>{{ 'All Claims' if current_user.role == 'adjuster' else 'Your Claims' }}</h2>
     <p class="subtitle">{{ claims|length }} claim{{ '' if claims|length == 1 else 's' }}</p>
   </div>
   <a class="btn" href="{{ url_for('claims.new_claim') }}">File a Claim</a>
@@ -12,32 +12,30 @@
 
 {% if current_user.role == 'adjuster' %}
 {# Adjuster: dense table, sortable-feeling, built for scanning volume. #}
-<div class="card">
-  {% if claims %}
-  <div class="table-wrap">
-  <table>
-    <thead>
-      <tr><th>ID</th><th>Policy</th><th>Type</th><th>Incident Date</th><th>Amount</th><th>Status</th><th>Risk Score</th></tr>
-    </thead>
-    <tbody>
-      {% for claim in claims %}
-      <tr onclick="window.location='{{ url_for('claims.claim_detail', claim_id=claim.id) }}'" style="cursor:pointer">
-        <td>#{{ claim.id }}</td>
-        <td>#{{ claim.policy_id }}</td>
-        <td>{{ claim.incident_type.replace('_',' ')|title }}</td>
-        <td>{{ claim.incident_date }}</td>
-        <td>${{ "%.2f"|format(claim.claimed_amount) }}</td>
-        <td><span class="badge badge-{{ claim.status }}">{{ claim.status.replace('_',' ')|title }}</span></td>
-        <td>{% if claim.risk_score is not none %}{{ risk_meter(claim.risk_score, claim.risk_priority or 'normal') }}{% else %}N/A{% endif %}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  </div>
-  {% else %}
-  <p class="helptext">No claims yet.</p>
-  {% endif %}
+{% if claims %}
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>ID</th><th>Policy</th><th>Type</th><th>Incident Date</th><th>Amount</th><th>Status</th><th>Risk Score</th></tr>
+  </thead>
+  <tbody>
+    {% for claim in claims %}
+    <tr onclick="window.location='{{ url_for('claims.claim_detail', claim_id=claim.id) }}'" style="cursor:pointer">
+      <td>#{{ claim.id }}</td>
+      <td>#{{ claim.policy_id }}</td>
+      <td>{{ claim.incident_type.replace('_',' ')|title }}</td>
+      <td>{{ claim.incident_date }}</td>
+      <td>${{ "%.2f"|format(claim.claimed_amount) }}</td>
+      <td><span class="badge badge-{{ claim.status }}">{{ claim.status.replace('_',' ')|title }}</span></td>
+      <td>{% if claim.risk_score is not none %}{{ risk_meter(claim.risk_score, claim.risk_priority or 'normal') }}{% else %}N/A{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 </div>
+{% else %}
+<p class="helptext">No claims yet.</p>
+{% endif %}
 
 {% else %}
 {# Customer: a claim is a moment in someone's life, not a spreadsheet row. #}
@@ -57,9 +55,7 @@
   {% endfor %}
 </div>
 {% else %}
-<div class="card">
-  <p class="helptext">No claims yet. If you ever need to file one, we're right here.</p>
-</div>
+<p class="helptext">No claims yet. If you ever need to file one, we're right here.</p>
 {% endif %}
 {% endif %}
 {% endblock %}

@@ -2,37 +2,59 @@
 {% from "_risk.html" import risk_meter %}
 {% block title %}Review Queue{% endblock %}
 {% block content %}
+{% set high_count = claims|selectattr('risk_priority', 'equalto', 'high')|list|length %}
+{% set normal_count = claims|rejectattr('risk_priority', 'equalto', 'high')|list|length %}
+{% set total_exposed = claims|sum(attribute='claimed_amount') %}
 <div class="page-header">
   <div>
-    <h1>Adjuster Review Queue</h1>
-    <p class="subtitle">Every claim below needs a human decision. Sorted by risk score, highest first.</p>
+    <h2>Needs Review</h2>
+    <p class="subtitle">{{ claims|length }} claim{{ '' if claims|length == 1 else 's' }} awaiting a human decision &middot; highest risk first &middot; ${{ "{:,.0f}".format(total_exposed) }} exposed</p>
   </div>
-</div>
-
-<div class="card">
   {% if claims %}
-  <div class="table-wrap">
-  <table>
-    <thead>
-      <tr><th>ID</th><th>Policy</th><th>Type</th><th>Amount</th><th>Risk Score</th><th>Priority</th><th>Filed</th></tr>
-    </thead>
-    <tbody>
-      {% for claim in claims %}
-      <tr onclick="window.location='{{ url_for('claims.claim_detail', claim_id=claim.id) }}'" style="cursor:pointer">
-        <td>#{{ claim.id }}</td>
-        <td>#{{ claim.policy_id }} ({{ claim.policy.policyholder.name }})</td>
-        <td>{{ claim.incident_type.replace('_',' ')|title }}</td>
-        <td>${{ "%.2f"|format(claim.claimed_amount) }}</td>
-        <td>{{ risk_meter(claim.risk_score, claim.risk_priority) }}</td>
-        <td class="priority-{{ claim.risk_priority }}">{{ claim.risk_priority|title }}</td>
-        <td>{{ claim.claim_date.strftime('%Y-%m-%d') }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  </div>
-  {% else %}
-  <p class="helptext">Queue is empty: nothing pending review.</p>
+  <a class="btn" href="{{ url_for('claims.claim_detail', claim_id=claims[0].id) }}">Take Next Claim</a>
   {% endif %}
 </div>
+
+{% if claims %}
+<div class="claim-header-tags" style="margin-bottom:var(--space-4);">
+  {% if high_count %}<span class="badge badge-pending_review">High priority &middot; {{ high_count }}</span>{% endif %}
+  {% if normal_count %}<span class="badge badge-submitted">Normal &middot; {{ normal_count }}</span>{% endif %}
+</div>
+{% endif %}
+
+{% if claims %}
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr><th>Score</th><th>Claim</th><th>Incident</th><th style="text-align:right">Claimed</th><th>Top Rule Fired</th><th>Filed</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for claim in claims %}
+    {% set top_rule = top_rules.get(claim.id) %}
+    <tr>
+      <td><span class="{{ 'priority-high' if claim.risk_priority == 'high' }}" style="font-family:var(--font-heading);font-weight:600;font-size:19px;">{{ claim.risk_score }}</span></td>
+      <td>
+        <a href="{{ url_for('claims.claim_detail', claim_id=claim.id) }}" style="font-weight:600;">#{{ claim.id }} &middot; {{ claim.policy.policyholder.name }}</a>
+        <div class="helptext" style="margin-top:2px;">Policy #{{ claim.policy_id }} &middot; {{ claim.policy.vehicle_year }} {{ claim.policy.vehicle_make }} {{ claim.policy.vehicle_model }}</div>
+      </td>
+      <td>{{ claim.incident_type.replace('_',' ')|title }}</td>
+      <td style="text-align:right">${{ "%.2f"|format(claim.claimed_amount) }}</td>
+      <td>
+        {% if top_rule %}
+          {{ top_rule.reason }} <span class="helptext">+{{ top_rule.points }}</span>
+        {% else %}
+          <span class="helptext">No rules fired</span>
+        {% endif %}
+      </td>
+      <td>{{ claim.claim_date.strftime('%Y-%m-%d') }}</td>
+      <td><a class="btn-ghost" href="{{ url_for('claims.claim_detail', claim_id=claim.id) }}">Review</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+<p class="helptext" style="max-width:70ch;margin-top:var(--space-4);">Scores are advisory: they sort this queue and never deny a claim by themselves. Nothing below 15 points and $2,000 appears here at all, since it was auto-cleared before an adjuster ever saw it.</p>
+{% else %}
+<p class="helptext">Queue is empty: nothing pending review.</p>
+{% endif %}
 {% endblock %}
